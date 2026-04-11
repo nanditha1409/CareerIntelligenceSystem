@@ -1,93 +1,228 @@
 import React, { useState, useEffect } from 'react';
 
-const TestSection = ({ domain, onComplete, onBack }) => {
-  const [questions, setQuestions] = useState([]);
-  const [answers, setAnswers] = useState([]);
+const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
+// ── Spinner ───────────────────────────────────────────────────────────────────
+const Spinner = () => (
+  <svg className="h-8 w-8 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+  </svg>
+);
+
+// ── Main ──────────────────────────────────────────────────────────────────────
+const TestSection = ({ domain, skills = [], onComplete, onBack }) => {
+  const [questions, setQuestions]   = useState([]);
+  const [answers, setAnswers]       = useState({});   // { [questionId]: chosenOption }
+  const [loading, setLoading]       = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+
+  // ── Fetch questions ─────────────────────────────────────────────────────────
   useEffect(() => {
-    const fetchQuestions = async () => {
-      const res = await fetch(`http://127.0.0.1:8000/get-questions/${encodeURIComponent(domain)}`);
-      const data = await res.json();
-      setQuestions(data.questions || []);
-      setAnswers(new Array((data.questions || []).length).fill(''));
-    };
-    if (domain) fetchQuestions();
+    if (!domain) return;
+    setLoading(true);
+    setFetchError(null);
+    setAnswers({});
+
+    // Try new path first, fall back to legacy
+    fetch(`${API}/questions/${encodeURIComponent(domain)}`)
+      .then(async (res) => {
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || `HTTP ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        const qs = data.questions || [];
+        if (qs.length === 0) throw new Error('Server returned 0 questions for this domain.');
+        setQuestions(qs);
+      })
+      .catch((err) => setFetchError(err.message))
+      .finally(() => setLoading(false));
   }, [domain]);
 
-  const handleAnswerChange = (index, value) => {
-    const newAnswers = [...answers];
-    newAnswers[index] = value;
-    setAnswers(newAnswers);
-  };
+  // ── Answer selection ────────────────────────────────────────────────────────
+  const handleAnswer = (questionId, optionIndex) =>
+    setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
 
+  // ── Submit ──────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
-    const res = await fetch('http://127.0.0.1:8000/evaluate-test', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ domain, answers }),
-    });
-    const data = await res.json();
-    console.log('API response:', data);
-    onComplete(data);
+    setSubmitting(true);
+    setSubmitError(null);
+
+    // Build structured payload: [{id, answer}] where answer is the chosen index
+    const answersPayload = questions.map((q) => ({
+      id:     q.id,
+      answer: answers[q.id] ?? -1,
+    }));
+
+    try {
+      const res = await fetch(`${API}/evaluate`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ domain, answers: answersPayload, skills }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      onComplete(data);
+    } catch (err) {
+      setSubmitError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const allAnswered = questions.length > 0 && answers.every(Boolean);
+  // ── Derived state ───────────────────────────────────────────────────────────
+  const answered   = questions.filter((q) => answers[q.id] !== undefined).length;
+  const total      = questions.length;
+  const allAnswered = total > 0 && answered === total;
+  const progress   = total ? Math.round((answered / total) * 100) : 0;
 
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-8">
-      <div className="rounded-[2rem] bg-slate-900/95 p-8 ring-1 ring-white/10 shadow-2xl shadow-slate-950/30">
+    <div className="space-y-8 animate-slide-up">
+
+      {/* Header */}
+      <div className="glass p-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.24em] text-indigo-300">Assessment</p>
-            <h2 className="mt-3 text-3xl font-semibold text-white">Test your readiness for {domain}</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-400">Answer all questions to reveal your score, feedback, and areas to improve.</p>
+            <p className="section-label">Assessment</p>
+            <h2 className="mt-2 text-3xl font-semibold text-white">
+              Test your readiness for {domain}
+            </h2>
+            <p className="mt-1.5 text-sm text-slate-400">
+              {total > 0
+                ? `Answer all ${total} questions to reveal your readiness score.`
+                : 'Loading questions…'}
+            </p>
           </div>
-          <button onClick={onBack} className="rounded-full border border-slate-700 bg-slate-900/90 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:border-slate-500 hover:text-white">
-            Back to recommendations
-          </button>
+          <button onClick={onBack} className="btn-ghost text-xs shrink-0">← Back</button>
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-6">
-          {questions.map((q, index) => (
-            <div key={index} className="rounded-[1.75rem] border border-white/10 bg-slate-900/90 p-6 shadow-lg shadow-slate-950/20">
-              <p className="text-sm uppercase tracking-[0.24em] text-indigo-300">Question {index + 1}</p>
-              <h3 className="mt-3 text-lg font-semibold text-white">{q.question}</h3>
-              <div className="mt-5 grid gap-3">
-                {q.options.map((opt, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleAnswerChange(index, opt)}
-                    className={`w-full rounded-2xl border px-4 py-3 text-left text-sm transition ${answers[index] === opt ? 'border-indigo-500 bg-indigo-500/15 text-white' : 'border-slate-700 bg-slate-950/90 text-slate-300 hover:border-indigo-500 hover:bg-slate-900/90'}`}
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center justify-center py-24">
+          <Spinner />
         </div>
+      )}
 
-        <div className="space-y-6">
-          <div className="rounded-[2rem] border border-white/10 bg-slate-900/95 p-6 shadow-2xl shadow-slate-950/30">
-            <p className="text-sm uppercase tracking-[0.24em] text-indigo-300">Progress</p>
-            <div className="mt-4 flex items-center justify-between gap-4">
-              <p className="text-5xl font-semibold text-white">{questions.filter((_, index) => Boolean(answers[index])).length}/{questions.length}</p>
-              <span className="rounded-full bg-indigo-500/15 px-4 py-2 text-sm font-semibold text-indigo-200">{allAnswered ? 'Ready to submit' : 'Awaiting answers'}</span>
-            </div>
-            <p className="mt-3 text-sm leading-6 text-slate-400">Complete all answers to unlock your readiness score and tailored feedback.</p>
-          </div>
-
+      {/* Fetch error */}
+      {!loading && fetchError && (
+        <div className="glass p-8 text-center space-y-4">
+          <p className="text-rose-400 font-semibold">Failed to load questions</p>
+          <p className="text-sm text-slate-400">{fetchError}</p>
           <button
-            onClick={handleSubmit}
-            disabled={!allAnswered}
-            className="w-full rounded-full bg-indigo-500 px-6 py-4 text-sm font-semibold text-white transition hover:bg-indigo-400 disabled:cursor-not-allowed disabled:bg-slate-700"
+            onClick={() => { setFetchError(null); setLoading(true); }}
+            className="btn-primary text-xs"
           >
-            Submit Test
+            Retry
           </button>
         </div>
-      </div>
+      )}
+
+      {/* Questions */}
+      {!loading && !fetchError && total > 0 && (
+        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+
+          {/* Question cards */}
+          <div className="space-y-5">
+            {questions.map((q, index) => {
+              const isAnswered = Boolean(answers[q.id]);
+              return (
+                <div
+                  key={q.id}
+                  className={`rounded-3xl border p-6 transition-all duration-200 ${
+                    isAnswered
+                      ? 'border-indigo-500/30 bg-indigo-950/30'
+                      : 'border-white/[0.07] bg-slate-900/60'
+                  }`}
+                >
+                  {/* Question meta */}
+                  <div className="flex items-start gap-3 mb-4">
+                    <span className={`shrink-0 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold
+                      ${isAnswered ? 'bg-indigo-500 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <span className="inline-block rounded-full bg-slate-800 px-2.5 py-0.5 text-[10px] font-medium text-slate-400 mb-2">
+                        {q.topic_tag || q.sub_topic}
+                      </span>
+                      <h3 className="text-sm font-semibold text-white leading-snug">{q.question}</h3>
+                    </div>
+                  </div>
+
+                  {/* Options */}
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {(q.options || []).map((opt, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleAnswer(q.id, i)}
+                        className={`rounded-2xl border px-4 py-3 text-left text-sm transition-all duration-150 ${
+                          answers[q.id] === i
+                            ? 'border-indigo-500 bg-indigo-500/15 text-white font-medium'
+                            : 'border-slate-700/60 bg-slate-950/50 text-slate-400 hover:border-indigo-500/40 hover:text-slate-200'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Sticky sidebar */}
+          <div>
+            <div className="glass p-6 sticky top-24 space-y-5">
+              <div>
+                <p className="section-label">Progress</p>
+                <div className="mt-4 flex items-end gap-2">
+                  <span className="text-4xl font-bold text-white">{answered}</span>
+                  <span className="text-slate-500 mb-1">/ {total}</span>
+                </div>
+                <div className="mt-3 h-2 w-full rounded-full bg-slate-800">
+                  <div
+                    className="h-2 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-500"
+                    style={{ width: `${progress}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-xs text-slate-500">
+                  {allAnswered
+                    ? 'All answered — ready to submit.'
+                    : `${total - answered} question${total - answered !== 1 ? 's' : ''} remaining`}
+                </p>
+              </div>
+
+              {/* Submit error */}
+              {submitError && (
+                <p className="rounded-2xl bg-rose-500/10 border border-rose-500/20 px-4 py-3 text-xs text-rose-300">
+                  {submitError}
+                </p>
+              )}
+
+              <button
+                onClick={handleSubmit}
+                disabled={!allAnswered || submitting}
+                className="btn-primary w-full"
+              >
+                {submitting ? (
+                  <><Spinner /><span>Scoring…</span></>
+                ) : 'Submit Test'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

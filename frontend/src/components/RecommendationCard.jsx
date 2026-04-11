@@ -1,40 +1,95 @@
 import React from 'react';
 
-const RecommendationCard = ({ recommendation, onTakeTest }) => {
+const DEMAND_COLOR = {
+  'Very High': 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
+  'High':      'text-sky-400    bg-sky-400/10    border-sky-400/20',
+  'Medium':    'text-amber-400  bg-amber-400/10  border-amber-400/20',
+};
+
+const RANK_LABEL = ['#1 Match', '#2 Match', '#3 Match'];
+
+const RecommendationCard = ({ recommendation, onTakeTest, rank = 0 }) => {
+  const demandClass = DEMAND_COLOR[recommendation.demand] || DEMAND_COLOR['Medium'];
+  const isTop = rank === 0;
+
   return (
-    <div className="group rounded-[2rem] border border-white/10 bg-slate-900/90 p-6 shadow-xl shadow-slate-950/20 transition hover:-translate-y-1 hover:border-indigo-500/20 hover:bg-slate-900">
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <h3 className="text-xl font-semibold text-white">{recommendation.domain}</h3>
-        <span className="rounded-full bg-indigo-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-indigo-200">Top pick</span>
-      </div>
-      <div className="grid gap-3 text-sm text-slate-400">
-        <div className="rounded-3xl bg-slate-950/80 p-4">
-          <p className="text-slate-300">Confidence</p>
-          <p className="mt-2 text-lg font-semibold text-white">{recommendation.confidence}%</p>
+    <div
+      className={`group relative flex flex-col rounded-3xl border transition-all duration-300
+        hover:-translate-y-1 hover:shadow-glow-sm
+        ${isTop
+          ? 'border-indigo-500/40 bg-gradient-to-b from-indigo-950/60 to-slate-900/80 shadow-glow-sm'
+          : 'border-white/[0.07] bg-slate-900/60 hover:border-indigo-500/20'
+        } backdrop-blur-sm`}
+    >
+      {/* Top accent bar */}
+      {isTop && (
+        <div className="absolute inset-x-0 top-0 h-px rounded-t-3xl bg-gradient-to-r from-transparent via-indigo-500/60 to-transparent" />
+      )}
+
+      <div className="flex flex-col gap-5 p-6">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <span className="section-label">{RANK_LABEL[rank] || `#${rank + 1} Match`}</span>
+            <h3 className="mt-1.5 text-lg font-semibold text-white leading-snug">{recommendation.domain}</h3>
+          </div>
+          <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${demandClass}`}>
+            {recommendation.demand}
+          </span>
         </div>
-        <div className="rounded-3xl bg-slate-950/80 p-4">
-          <p className="text-slate-300">Salary</p>
-          <p className="mt-2 text-lg font-semibold text-white">{recommendation.salary}</p>
+
+        {/* Confidence bar */}
+        <div>
+          <div className="flex justify-between text-xs mb-1.5">
+            <span className="text-slate-500">Confidence match</span>
+            <span className="font-semibold text-white">{recommendation.confidence}%</span>
+          </div>
+          <div className="h-1.5 w-full rounded-full bg-slate-800">
+            <div
+              className="h-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-700"
+              style={{ width: `${recommendation.confidence}%` }}
+            />
+          </div>
         </div>
-        <div className="rounded-3xl bg-slate-950/80 p-4">
-          <p className="text-slate-300">Demand</p>
-          <p className="mt-2 text-lg font-semibold text-white">{recommendation.demand}</p>
+
+        {/* Stats row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl bg-slate-950/60 p-3">
+            <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Salary</p>
+            <p className="text-sm font-semibold text-white">{recommendation.salary}</p>
+          </div>
+          <div className="rounded-2xl bg-slate-950/60 p-3">
+            <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Market</p>
+            <p className={`text-sm font-semibold ${demandClass.split(' ')[0]}`}>{recommendation.demand}</p>
+          </div>
         </div>
+
+        {/* Why this */}
+        {recommendation.reason?.length > 0 && (
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-2">Why this domain</p>
+            <div className="flex flex-wrap gap-1.5">
+              {recommendation.reason.slice(0, 4).map((r, i) => (
+                <span key={i} className="skill-tag">{r}</span>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-      <div className="mt-6 text-sm text-slate-300">
-        <p className="font-medium text-slate-100">Why this?</p>
-        <ul className="mt-3 space-y-2 text-slate-400">
-          {recommendation.reason.map((r, i) => (
-            <li key={i} className="rounded-2xl bg-slate-950/80 px-3 py-2">{r}</li>
-          ))}
-        </ul>
+
+      {/* CTA */}
+      <div className="mt-auto p-6 pt-0">
+        <button
+          onClick={() => onTakeTest(recommendation.domain)}
+          className={`w-full rounded-2xl py-3 text-sm font-semibold transition-all duration-200
+            ${isTop
+              ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500 hover:scale-[1.02] shadow-glow-sm'
+              : 'border border-slate-700 text-slate-300 hover:border-indigo-500/50 hover:text-white hover:bg-indigo-500/5'
+            }`}
+        >
+          Take domain test →
+        </button>
       </div>
-      <button
-        onClick={() => onTakeTest(recommendation.domain)}
-        className="mt-7 inline-flex w-full items-center justify-center rounded-full bg-indigo-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-400"
-      >
-        Take the domain test
-      </button>
     </div>
   );
 };
