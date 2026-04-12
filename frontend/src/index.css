@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    @apply bg-slate-950 text-slate-100 antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-slate-950; }
+  ::-webkit-scrollbar-thumb { @apply bg-slate-700 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-slate-600; }
+}
+
+/* ── Components ───────────────────────────────────────────────────────────── */
+@layer components {
+
+  /* Glassmorphism card */
+  .glass {
+    @apply bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] rounded-3xl;
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 bg-clip-text text-transparent;
+  }
+
+  /* Skill tag pill */
+  .skill-tag {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-indigo-500/30
+           bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-300
+           transition hover:border-indigo-400/50 hover:bg-indigo-500/20;
+  }
+
+  /* Section label */
+  .section-label {
+    @apply text-xs font-semibold uppercase tracking-[0.2em] text-indigo-400;
+  }
+
+  /* Primary button */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3
+           text-sm font-semibold text-white shadow-glow-sm
+           transition-all duration-200
+           hover:from-indigo-500 hover:to-violet-500 hover:scale-[1.03] hover:shadow-glow-indigo
+           active:scale-[0.98]
+           disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 disabled:shadow-none;
+  }
+
+  /* Ghost button */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full
+           border border-slate-700 bg-transparent px-5 py-2.5
+           text-sm font-semibold text-slate-300
+           transition-all duration-200
+           hover:border-indigo-500/60 hover:text-white hover:bg-indigo-500/5;
+  }
+
+  /* Input base */
+  .input-base {
+    @apply w-full rounded-2xl border border-slate-700/80 bg-slate-900/60
+           px-5 py-4 text-slate-100 placeholder-slate-500
+           outline-none backdrop-blur-sm
+           transition-all duration-200
+           focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:bg-slate-900/80;
+  }
+}
+
+/* ── Utilities ────────────────────────────────────────────────────────────── */
+@layer utilities {
+  .animation-delay-100 { animation-delay: 100ms; }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-300 { animation-delay: 300ms; }
+  .animation-delay-400 { animation-delay: 400ms; }
+
+  /* Noise texture overlay */
+  .noise::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    border-radius: inherit;
+  }
+}
+
+/* ── Radar chart SVG ──────────────────────────────────────────────────────── */
+.radar-polygon { transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* ── Progress ring ────────────────────────────────────────────────────────── */
+.progress-ring-circle {
+  transition: stroke-dashoffset 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
