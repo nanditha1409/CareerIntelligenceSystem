@@ -4,24 +4,34 @@ import random
 from collections import defaultdict
 
 import joblib
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
-from schemas import SkillsInput, TestSubmission, RecommendResponse, EvaluateResponse
+load_dotenv()
+
+from schemas import SkillsInput, TestSubmission, ChatRequest, RecommendResponse, EvaluateResponse
 from database import init_db, get_db, UserSession, TestResult
 from utils import (
     SKILLS_LIST, DOMAIN_DATA, DOMAIN_SKILLS,
-    normalize_skills, compute_skill_gap, compute_readiness_score,
+    normalize_skills, compute_skill_gap,
     get_resources_for_skills, get_xai_explanation,
 )
+import llm_service
 
 # ── App ───────────────────────────────────────────────────────────────────────
-app = FastAPI(title="Career Intelligence API", version="3.1.0")
+app = FastAPI(title="Career Intelligence API", version="4.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:8000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -29,10 +39,9 @@ app.add_middleware(
 
 init_db()
 
-# ── Question bank ─────────────────────────────────────────────────────────────
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-_QB_PATH = os.path.join(BASE_DIR, "questions.json")
-
+# ── Static question bank (fallback when LLM is unavailable) ──────────────────
+BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
+_QB_PATH   = os.path.join(BASE_DIR, "questions.json")
 with open(_QB_PATH, "r", encoding="utf-8") as _f:
     QUESTION_BANK: dict[str, list[dict]] = json.load(_f)
 
@@ -46,42 +55,33 @@ except FileNotFoundError:
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _sample_questions(domain: str, n: int = 10) -> list[dict]:
-    """
-    Return n randomly sampled questions, safe for the frontend.
-    Exposes: id, text, question (alias), options, sub_topic, topic_tag.
-    Never exposes correct_index.
-    """
+def _strip_correct_index(questions: list[dict]) -> list[dict]:
+    """Return questions safe for the frontend — no correct_index exposed."""
+    return [
+        {
+            "id":        q["id"],
+            "text":      q.get("text", q.get("question", "")),
+            "question":  q.get("text", q.get("question", "")),
+            "options":   q["options"],
+            "sub_topic": q.get("sub_topic", q.get("topic_tag", "")),
+            "topic_tag": q.get("topic_tag", q.get("sub_topic", "")),
+        }
+        for q in questions
+    ]
+
+
+def _sample_static(domain: str, n: int = 10) -> list[dict]:
     pool = QUESTION_BANK.get(domain, [])
     if not pool:
         return []
     sampled = random.sample(pool, min(n, len(pool)))
-    return [
-        {
-            "id":        q["id"],
-            "text":      q["text"],
-            "question":  q["text"],        # alias for legacy frontend
-            "options":   q["options"],
-            "sub_topic": q["sub_topic"],
-            "topic_tag": q["sub_topic"],   # alias so both field names work
-        }
-        for q in sampled
-    ]
+    return _strip_correct_index(sampled)
 
 
 def _parse_answers(raw_answers: list) -> dict[str, int]:
-    """
-    Normalise the answers payload into {question_id: chosen_index (int)}.
-
-    Accepts:
-      1. [{"id": "ds_01", "answer": 2}]   ← index-based (preferred)
-      2. {"ds_01": 2, ...}                ← dict form
-    """
     result: dict[str, int] = {}
-
     if isinstance(raw_answers, dict):
-        return {str(k): int(v) for k, v in raw_answers.items() if str(v).isdigit() or isinstance(v, int)}
-
+        return {str(k): int(v) for k, v in raw_answers.items() if isinstance(v, int) or str(v).lstrip("-").isdigit()}
     for item in raw_answers:
         if isinstance(item, dict):
             qid = str(item.get("id", item.get("question_id", "")))
@@ -91,7 +91,6 @@ def _parse_answers(raw_answers: list) -> dict[str, int]:
                     result[qid] = int(val)
                 except (ValueError, TypeError):
                     pass
-
     return result
 
 
@@ -99,148 +98,148 @@ def _score_answers(
     served_questions: list[dict],
     user_answer_map: dict[str, int],
 ) -> tuple[int, float, list[str]]:
-    """
-    Returns (correct_count, quiz_score_pct, weak_area_subtopics).
-    Scores by comparing chosen index against correct_index.
-    weak_area_subtopics = sub_topic strings for every incorrect answer.
-    """
-    correct = 0
-    weak_subtopics: list[str] = []
-
+    correct, weak = 0, []
     for q in served_questions:
-        chosen_idx = user_answer_map.get(q["id"], -1)
-        if chosen_idx == q["correct_index"]:
+        if user_answer_map.get(q["id"], -1) == q["correct_index"]:
             correct += 1
         else:
-            weak_subtopics.append(q["sub_topic"])
-
-    total      = len(served_questions)
-    quiz_score = round((correct / total) * 100, 1) if total else 0.0
-    return correct, quiz_score, weak_subtopics
+            weak.append(q.get("sub_topic", q.get("topic_tag", "")))
+    total = len(served_questions)
+    return correct, round((correct / total) * 100, 1) if total else 0.0, weak
 
 
-def _detect_weak_topics(
-    served_questions: list[dict],
-    user_answer_map: dict[str, int],
-    threshold: float = 0.4,
-) -> list[dict]:
-    """
-    Group wrong answers by sub_topic.
-    Flag any sub-topic where wrong_rate > threshold.
-    """
+def _detect_weak_topics(served_questions: list[dict], user_answer_map: dict[str, int]) -> list[dict]:
     stats: dict[str, dict] = defaultdict(lambda: {"wrong": 0, "total": 0})
-
     for q in served_questions:
-        tag = q["sub_topic"]
+        tag = q.get("sub_topic", q.get("topic_tag", ""))
         stats[tag]["total"] += 1
         if user_answer_map.get(q["id"], -1) != q["correct_index"]:
             stats[tag]["wrong"] += 1
-
     weak = [
         {"sub_topic": tag, "wrong": s["wrong"], "total": s["total"]}
         for tag, s in stats.items()
-        if s["total"] > 0 and (s["wrong"] / s["total"]) > threshold
+        if s["total"] > 0 and (s["wrong"] / s["total"]) > 0.4
     ]
     weak.sort(key=lambda x: x["wrong"] / x["total"], reverse=True)
     return weak
+
+
+def _weighted_skill_match(skills: dict[str, int], domain: str) -> float:
+    """
+    Weighted skill match = sum(proficiency/5) for matched domain skills / total domain skills.
+    Returns 0-100.
+    """
+    required = DOMAIN_SKILLS.get(domain, [])
+    if not required:
+        return 0.0
+    total_possible = len(required)
+    weighted_sum   = sum(skills.get(s, 0) / 5.0 for s in required)
+    return round((weighted_sum / total_possible) * 100, 1)
+
+
+def _compute_readiness(skill_match: float, quiz_score: float, domain: str) -> dict:
+    score = round((0.6 * skill_match) + (0.4 * quiz_score), 1)
+    label = "Job Ready" if score >= 75 else "Developing" if score >= 45 else "Beginner"
+    return {
+        "domain":                 domain,
+        "skill_match":            round(skill_match, 1),
+        "assessment_performance": round(quiz_score, 1),
+        "readiness_score":        score,
+        "label":                  label,
+    }
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 
 @app.get("/")
 def home():
-    return {"message": "Career Intelligence API v3.1 is running", "domains": list(QUESTION_BANK.keys())}
+    return {"message": "Career Intelligence API v4.0 is running", "domains": list(QUESTION_BANK.keys())}
 
 
-# ── GET /questions/{domain}  (new canonical path) ─────────────────────────────
+# ── GET /questions/{domain}  ──────────────────────────────────────────────────
 @app.get("/questions/{domain:path}")
-def get_questions_v2(domain: str):
+async def get_questions(domain: str, skills: str = ""):
     """
-    Returns 10 randomly sampled questions for the domain.
-    Fields: id, text, question, options (4 items), sub_topic, topic_tag.
-    Uses {domain:path} to allow slashes in domain names like 'UI/UX Designer'.
-    correct_index is intentionally excluded.
+    Returns 10 questions for the domain.
+    If GEMINI_API_KEY is set and `skills` query param is provided as JSON,
+    questions are generated dynamically by the LLM.
+    Otherwise falls back to the static question bank.
+
+    ?skills={"python":4,"sql":2}
     """
     domain = domain.strip()
-    questions = _sample_questions(domain, n=10)
+
+    # Try LLM generation if skills provided and API configured
+    skills_dict: dict[str, int] = {}
+    if skills:
+        try:
+            skills_dict = json.loads(skills)
+        except json.JSONDecodeError:
+            pass
+
+    if skills_dict and llm_service._CONFIGURED:
+        try:
+            questions = await llm_service.generate_questions(domain, skills_dict)
+            return {"domain": domain, "questions": _strip_correct_index(questions), "total": len(questions), "source": "llm"}
+        except Exception:
+            pass  # fall through to static
+
+    # Static fallback
+    questions = _sample_static(domain)
     if not questions:
         raise HTTPException(
             status_code=404,
             detail=f"No questions found for '{domain}'. Available: {list(QUESTION_BANK.keys())}",
         )
-    return {"domain": domain, "questions": questions, "total": len(questions)}
+    return {"domain": domain, "questions": questions, "total": len(questions), "source": "static"}
 
 
-# ── GET /get-questions/{domain}  (legacy path — kept for backward compat) ─────
+# ── Legacy path ───────────────────────────────────────────────────────────────
 @app.get("/get-questions/{domain:path}")
-def get_questions_legacy(domain: str):
-    return get_questions_v2(domain)
+async def get_questions_legacy(domain: str, skills: str = ""):
+    return await get_questions(domain, skills)
 
 
-# ── POST /evaluate  (new canonical path) ──────────────────────────────────────
+# ── POST /evaluate ────────────────────────────────────────────────────────────
 @app.post("/evaluate", response_model=EvaluateResponse)
-def evaluate(data: TestSubmission, db: Session = Depends(get_db)):
-    """
-    Score a completed quiz.
+async def evaluate(data: TestSubmission, db: Session = Depends(get_db)):
+    domain       = data.domain.strip()
+    skills_dict  = data.skills_as_dict()
 
-    Request body:
-      {
-        "domain": "Data Scientist",
-        "answers": [{"id": "ds_01", "answer": "df.dropna()"}, ...],
-        "skills": ["python", "sql"]   // optional — used for readiness formula
-      }
-
-    Scoring:
-      quiz_score    = correct / total × 100
-      readiness     = 0.6 × skill_match + 0.4 × quiz_score
-      weak_topics   = sub-topics where wrong_rate > 40%
-    """
-    domain = data.domain.strip()
-    full_questions = QUESTION_BANK.get(domain)
+    # Resolve the full question pool (LLM cache first, then static)
+    full_questions: list[dict] = []
+    if skills_dict and llm_service._CONFIGURED:
+        try:
+            full_questions = await llm_service.generate_questions(domain, skills_dict)
+        except Exception:
+            pass
 
     if not full_questions:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Domain '{domain}' not found. Available: {list(QUESTION_BANK.keys())}",
-        )
+        full_questions = QUESTION_BANK.get(domain, [])
 
-    # Parse answers into {id: chosen_option}
+    if not full_questions:
+        raise HTTPException(status_code=404, detail=f"Domain '{domain}' not found.")
+
     user_answer_map = _parse_answers(data.answers)
-
     if not user_answer_map:
-        raise HTTPException(
-            status_code=422,
-            detail=(
-                "No valid answers received. "
-                "Send answers as [{\"id\": \"<question_id>\", \"answer\": <chosen_index>}]."
-            ),
-        )
+        raise HTTPException(status_code=422, detail="No valid answers received.")
 
-    # Resolve which questions were actually served to this user
     served_ids       = set(user_answer_map.keys())
     served_questions = [q for q in full_questions if q["id"] in served_ids]
 
     if not served_questions:
         raise HTTPException(
             status_code=422,
-            detail=(
-                f"None of the submitted question IDs match domain '{domain}'. "
-                f"Expected IDs like: {[q['id'] for q in full_questions[:3]]}..."
-            ),
+            detail=f"Question IDs don't match domain '{domain}'. Expected like: {[q['id'] for q in full_questions[:3]]}",
         )
 
     # ── Score ─────────────────────────────────────────────────────────────────
-    correct, quiz_score, weak_area_subtopics = _score_answers(served_questions, user_answer_map)
-
-    # ── Weak topic detection ──────────────────────────────────────────────────
+    correct, quiz_score, weak_subtopics = _score_answers(served_questions, user_answer_map)
     weak_sub_topics = _detect_weak_topics(served_questions, user_answer_map)
 
-    # ── Readiness formula: Overall = (0.6 × Skill Match) + (0.4 × Quiz Score) ─
-    user_skills  = normalize_skills(data.skills or [])
-    gap          = compute_skill_gap(user_skills, domain)
-    skill_match  = gap["match_percentage"]
-    readiness    = compute_readiness_score(skill_match, quiz_score)
-    readiness["domain"] = domain
+    # ── Weighted readiness: (0.6 × weighted_skill_match) + (0.4 × quiz_score) ─
+    skill_match = _weighted_skill_match(skills_dict, domain) if skills_dict else 0.0
+    readiness   = _compute_readiness(skill_match, quiz_score, domain)
 
     # ── Feedback ──────────────────────────────────────────────────────────────
     if quiz_score >= 80:
@@ -253,7 +252,8 @@ def evaluate(data: TestSubmission, db: Session = Depends(get_db)):
         feedback = "Start with the fundamentals. Use the resources below to build a solid base."
 
     # ── Resources ─────────────────────────────────────────────────────────────
-    resources = get_resources_for_skills(gap["missing_skills"][:5])
+    missing = [s for s in DOMAIN_SKILLS.get(domain, []) if s not in skills_dict]
+    resources = get_resources_for_skills(missing[:5])
 
     # ── Persist ───────────────────────────────────────────────────────────────
     db.add(TestResult(
@@ -268,36 +268,66 @@ def evaluate(data: TestSubmission, db: Session = Depends(get_db)):
     return {
         "quiz_score":      int(quiz_score),
         "correct_count":   correct,
-        "score":           int(quiz_score),   # backward compat
+        "score":           int(quiz_score),
         "feedback":        feedback,
         "weak_sub_topics": weak_sub_topics,
-        "weak_areas":      list(dict.fromkeys(weak_area_subtopics)),  # unique sub_topics of wrong answers
+        "weak_areas":      list(dict.fromkeys(weak_subtopics)),
         "readiness":       readiness,
         "resources":       resources,
     }
 
 
-# ── POST /evaluate-test  (legacy path) ────────────────────────────────────────
+# ── POST /evaluate-test  (legacy) ─────────────────────────────────────────────
 @app.post("/evaluate-test", response_model=EvaluateResponse)
-def evaluate_test_legacy(data: TestSubmission, db: Session = Depends(get_db)):
-    return evaluate(data, db)
+async def evaluate_test_legacy(data: TestSubmission, db: Session = Depends(get_db)):
+    return await evaluate(data, db)
+
+
+# ── POST /api/chat  (streaming consultant) ────────────────────────────────────
+@app.post("/api/chat")
+async def chat(req: ChatRequest):
+    """
+    Streaming endpoint for the AI Career Consultant.
+    Returns text/event-stream chunks.
+    """
+    weak_str = ", ".join(req.weak_areas) if req.weak_areas else "none identified"
+
+    system_prompt = (
+        f"You are an expert Career Consultant specialising in tech careers. "
+        f"The user just completed a {req.domain} assessment. "
+        f"Their quiz score was {req.quiz_score}% and overall readiness score is {req.readiness_score:.0f}%. "
+        f"Their weak areas are: {weak_str}. "
+        f"Be concise, encouraging, and actionable. "
+        f"When asked for a learning path, provide exactly 3 numbered steps with specific resources."
+    )
+
+    async def event_stream():
+        try:
+            async for chunk in llm_service.stream_chat(system_prompt, req.message):
+                # SSE format
+                yield f"data: {json.dumps({'text': chunk})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        yield "data: [DONE]\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 
 # ── POST /recommend-career ────────────────────────────────────────────────────
 @app.post("/recommend-career", response_model=RecommendResponse)
 def recommend(data: SkillsInput, db: Session = Depends(get_db)):
-    user_skills  = normalize_skills(data.skills)
+    skills_list = data.skills_as_list()
+    skills_dict = data.skills_as_dict()
+
+    user_skills  = normalize_skills(skills_list)
     input_vector = [1 if s in user_skills else 0 for s in SKILLS_LIST]
 
     if not any(input_vector):
-        raise HTTPException(
-            status_code=400,
-            detail="No recognised skills. Try: python, sql, react, docker.",
-        )
+        raise HTTPException(status_code=400, detail="No recognised skills. Try: python, sql, react, docker.")
 
-    probs      = model.predict_proba([input_vector])[0]
-    classes    = model.classes_
-    top_idx    = probs.argsort()[-3:][::-1]
+    probs   = model.predict_proba([input_vector])[0]
+    classes = model.classes_
+    top_idx = probs.argsort()[-3:][::-1]
 
     recommendations, skill_gap_list, all_missing = [], [], []
 

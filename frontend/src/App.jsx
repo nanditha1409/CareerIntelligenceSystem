@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import SkillInput from './components/SkillInput';
 import RecommendationCard from './components/RecommendationCard';
@@ -6,44 +6,52 @@ import TestSection from './components/TestSection';
 import ResultDashboard from './components/ResultDashboard';
 import SkillGapPanel from './components/SkillGapPanel';
 import XAIPanel from './components/XAIPanel';
+import HowItWorks from './components/HowItWorks';
+import DomainsGrid from './components/DomainsGrid';
+import ResultsHistory, { saveResult } from './components/ResultsHistory';
 
-const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const API  = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const VIEW = { HOME: 'home', RECS: 'recs', TEST: 'test', RESULTS: 'results' };
 
 const STATS = [
-  { value: '9+',   label: 'Career domains' },
-  { value: '32',   label: 'Skills tracked' },
-  { value: '91%',  label: 'Model accuracy' },
-  { value: '540',  label: 'Training samples' },
+  { value: '9+',  label: 'Career domains' },
+  { value: '32',  label: 'Skills tracked' },
+  { value: '91%', label: 'Model accuracy' },
+  { value: '540', label: 'Training samples' },
 ];
 
 export default function App() {
-  const [view, setView]                   = useState(VIEW.HOME);
-  const [isLoading, setIsLoading]         = useState(false);
-  const [error, setError]                 = useState(null);
-  const [currentSkills, setCurrentSkills] = useState([]);
+  const [view, setView]                       = useState(VIEW.HOME);
+  const [isLoading, setIsLoading]             = useState(false);
+  const [error, setError]                     = useState(null);
+  const [currentSkills, setCurrentSkills]     = useState({});
   const [recommendations, setRecommendations] = useState([]);
-  const [skillGap, setSkillGap]           = useState([]);
-  const [resources, setResources]         = useState([]);
-  const [selectedDomain, setSelectedDomain] = useState('');
-  const [testResult, setTestResult]       = useState(null);
+  const [skillGap, setSkillGap]               = useState([]);
+  const [resources, setResources]             = useState([]);
+  const [selectedDomain, setSelectedDomain]   = useState('');
+  const [testResult, setTestResult]           = useState(null);
   const inputRef = useRef(null);
 
-  const handleAnalyze = async (skillArray) => {
+  // When navigating back to HOME via nav links, scroll to the right section
+  const handleNavClick = (sectionId) => {
+    if (view !== VIEW.HOME) setView(VIEW.HOME);
+  };
+
+  const handleAnalyze = async (skillsObj) => {
     setError(null);
     setIsLoading(true);
     try {
       const res = await fetch(`${API}/recommend-career`, {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ skills: skillArray }),
+        body:    JSON.stringify({ skills: skillsObj }),
       });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.detail || 'Failed to get recommendations');
       }
       const data = await res.json();
-      setCurrentSkills(skillArray);
+      setCurrentSkills(skillsObj);
       setRecommendations(data.recommendations || []);
       setSkillGap(data.skill_gap || []);
       setResources(data.resources || []);
@@ -55,13 +63,34 @@ export default function App() {
     }
   };
 
-  const handleTakeTest = (domain) => { setSelectedDomain(domain); setTestResult(null); setView(VIEW.TEST); };
-  const handleTestComplete = (result) => { setTestResult(result); setView(VIEW.RESULTS); };
+  const handleTakeTest = (domain) => {
+    setSelectedDomain(domain);
+    setTestResult(null);
+    setView(VIEW.TEST);
+  };
+
+  const handleTestComplete = (result) => {
+    setTestResult(result);
+    // Persist to localStorage history
+    saveResult(selectedDomain, result);
+    window.dispatchEvent(new Event('careerbloom_history_updated'));
+    setView(VIEW.RESULTS);
+  };
+
   const handleRetake = () => { setTestResult(null); setView(VIEW.TEST); };
+
   const handleNewSearch = () => {
     setRecommendations([]); setSkillGap([]); setResources([]);
-    setTestResult(null); setSelectedDomain(''); setCurrentSkills([]);
+    setTestResult(null); setSelectedDomain(''); setCurrentSkills({});
     setView(VIEW.HOME);
+  };
+
+  // "Re-test" from history — jump straight to test with no prior skills
+  const handleRetest = (domain) => {
+    setSelectedDomain(domain);
+    setCurrentSkills({});
+    setTestResult(null);
+    setView(VIEW.TEST);
   };
 
   return (
@@ -74,7 +103,10 @@ export default function App() {
         <div className="absolute bottom-0 -left-40 h-[400px] w-[600px] rounded-full bg-indigo-800/8 blur-[100px]" />
       </div>
 
-      <Navbar onLaunch={() => { handleNewSearch(); setTimeout(() => inputRef.current?.focus(), 100); }} />
+      <Navbar
+        onLaunch={() => { handleNewSearch(); setTimeout(() => inputRef.current?.focus(), 100); }}
+        onNavClick={handleNavClick}
+      />
 
       <main className="relative mx-auto max-w-6xl px-6 py-12 lg:px-8">
 
@@ -88,80 +120,53 @@ export default function App() {
 
         {/* ── HOME ─────────────────────────────────────────────────────────── */}
         {view === VIEW.HOME && (
-          <div className="space-y-16">
-            {/* Hero */}
-            <div className="text-center space-y-6 pt-8 pb-4 animate-fade-in">
-              {/* Badge */}
-              <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-xs font-medium text-indigo-300">
-                <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-pulse-slow" />
-                AI-powered career intelligence
+          <div>
+            {/* Hero + skill input */}
+            <div className="space-y-16 pb-8">
+              <div className="text-center space-y-6 pt-8 pb-4 animate-fade-in">
+                <div className="inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-xs font-medium text-indigo-300">
+                  <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-pulse-slow" />
+                  AI-powered career intelligence
+                </div>
+                <h1 className="text-5xl font-extrabold text-white leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl">
+                  Find your ideal<br />
+                  <span className="gradient-text">career path</span>
+                </h1>
+                <p className="text-slate-400 max-w-lg mx-auto text-lg leading-relaxed">
+                  Enter your skills and get data-driven recommendations, skill gap analysis, and a personalised readiness score — in seconds.
+                </p>
               </div>
 
-              <h1 className="text-5xl font-extrabold text-white leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl">
-                Find your ideal<br />
-                <span className="gradient-text">career path</span>
-              </h1>
+              <div ref={inputRef}>
+                <SkillInput onAnalyze={handleAnalyze} isLoading={isLoading} />
+              </div>
 
-              <p className="text-slate-400 max-w-lg mx-auto text-lg leading-relaxed">
-                Enter your skills and get data-driven recommendations, skill gap analysis, and a personalised readiness score — in seconds.
-              </p>
-            </div>
-
-            {/* Skill input */}
-            <div ref={inputRef}>
-              <SkillInput onAnalyze={handleAnalyze} isLoading={isLoading} />
-            </div>
-
-            {/* Stats row */}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 animate-slide-up animation-delay-300">
-              {STATS.map(({ value, label }) => (
-                <div key={label} className="glass flex flex-col items-center gap-1 py-5 px-4 text-center">
-                  <span className="text-2xl font-bold gradient-text">{value}</span>
-                  <span className="text-xs text-slate-500">{label}</span>
-                </div>
-              ))}
-            </div>
-
-            {/* Feature preview cards */}
-            <div className="grid gap-5 sm:grid-cols-3 animate-slide-up animation-delay-400">
-              {[
-                {
-                  icon: (
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" />
-                    </svg>
-                  ),
-                  title: 'Career Recommendations',
-                  desc: 'Top 3 domain matches with confidence scores, salary ranges, and market demand.',
-                },
-                {
-                  icon: (
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  ),
-                  title: 'Skill Gap Analysis',
-                  desc: 'Radar chart showing your coverage vs. domain requirements with curated resources.',
-                },
-                {
-                  icon: (
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
-                    </svg>
-                  ),
-                  title: 'Readiness Score',
-                  desc: 'Weighted formula combining skill match (60%) and assessment performance (40%).',
-                },
-              ].map(({ icon, title, desc }) => (
-                <div key={title} className="glass p-6 group hover:border-indigo-500/20 transition-all duration-300">
-                  <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-indigo-500/15 border border-indigo-500/20 text-indigo-400 group-hover:bg-indigo-500/25 transition-colors">
-                    {icon}
+              {/* Stats */}
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 animate-slide-up animation-delay-300">
+                {STATS.map(({ value, label }) => (
+                  <div key={label} className="glass flex flex-col items-center gap-1 py-5 px-4 text-center">
+                    <span className="text-2xl font-bold gradient-text">{value}</span>
+                    <span className="text-xs text-slate-500">{label}</span>
                   </div>
-                  <h3 className="text-sm font-semibold text-white mb-1.5">{title}</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">{desc}</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
+
+            {/* Divider */}
+            <div className="border-t border-white/[0.05]" />
+
+            {/* ── How it works ─────────────────────────────────────────────── */}
+            <HowItWorks />
+
+            <div className="border-t border-white/[0.05]" />
+
+            {/* ── Domains grid ─────────────────────────────────────────────── */}
+            <DomainsGrid onTakeTest={handleTakeTest} />
+
+            <div className="border-t border-white/[0.05]" />
+
+            {/* ── Results history ───────────────────────────────────────────── */}
+            <ResultsHistory onRetest={handleRetest} />
           </div>
         )}
 
@@ -175,13 +180,11 @@ export default function App() {
               </div>
               <button onClick={handleNewSearch} className="btn-ghost text-xs">New search</button>
             </div>
-
             <div className="grid gap-6 lg:grid-cols-3 animate-slide-up">
               {recommendations.map((rec, i) => (
                 <RecommendationCard key={i} recommendation={rec} onTakeTest={handleTakeTest} rank={i} />
               ))}
             </div>
-
             <XAIPanel recommendations={recommendations} />
             <SkillGapPanel skillGap={skillGap} resources={resources} />
           </div>
@@ -193,7 +196,7 @@ export default function App() {
             domain={selectedDomain}
             skills={currentSkills}
             onComplete={handleTestComplete}
-            onBack={() => setView(VIEW.RECS)}
+            onBack={() => setView(recommendations.length ? VIEW.RECS : VIEW.HOME)}
           />
         )}
 
@@ -208,7 +211,6 @@ export default function App() {
         )}
       </main>
 
-      {/* Footer */}
       <footer className="relative mt-24 border-t border-white/[0.05] py-8 text-center text-xs text-slate-600">
         CareerBloom — AI Career Intelligence · Built with FastAPI + React + Tailwind
       </footer>

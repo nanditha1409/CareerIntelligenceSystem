@@ -2,43 +2,96 @@ import React, { useState, useRef } from 'react';
 
 const SUGGESTIONS = ['python', 'react', 'sql', 'docker', 'ml', 'typescript', 'aws', 'figma', 'node', 'kubernetes'];
 
+const PROFICIENCY_LABELS = {
+  1: 'Beginner',
+  2: 'Elementary',
+  3: 'Intermediate',
+  4: 'Advanced',
+  5: 'Expert',
+};
+
+const PROFICIENCY_COLORS = {
+  1: 'bg-rose-500/20 border-rose-500/40 text-rose-300',
+  2: 'bg-orange-500/20 border-orange-500/40 text-orange-300',
+  3: 'bg-amber-500/20 border-amber-500/40 text-amber-300',
+  4: 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300',
+  5: 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300',
+};
+
+// ── Skill chip with proficiency selector ─────────────────────────────────────
+const SkillChip = ({ skill, level, onChange, onRemove }) => (
+  <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${PROFICIENCY_COLORS[level]}`}>
+    {skill}
+    {/* Proficiency stepper */}
+    <button
+      onClick={(e) => { e.stopPropagation(); onChange(Math.max(1, level - 1)); }}
+      className="opacity-60 hover:opacity-100 transition-opacity leading-none"
+      aria-label="Decrease proficiency"
+    >−</button>
+    <span className="font-bold w-3 text-center">{level}</span>
+    <button
+      onClick={(e) => { e.stopPropagation(); onChange(Math.min(5, level + 1)); }}
+      className="opacity-60 hover:opacity-100 transition-opacity leading-none"
+      aria-label="Increase proficiency"
+    >+</button>
+    <span className="opacity-50 text-[9px] hidden sm:inline">{PROFICIENCY_LABELS[level]}</span>
+    <button
+      onClick={(e) => { e.stopPropagation(); onRemove(); }}
+      className="ml-0.5 opacity-60 hover:opacity-100 transition-opacity"
+      aria-label={`Remove ${skill}`}
+    >
+      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </span>
+);
+
+// ── Main ──────────────────────────────────────────────────────────────────────
 const SkillInput = ({ onAnalyze, isLoading }) => {
-  const [input, setInput] = useState('');
-  const [tags, setTags] = useState([]);
+  // skills: { [skillName]: proficiency (1-5) }
+  const [skills, setSkills]   = useState({});
+  const [input, setInput]     = useState('');
   const [focused, setFocused] = useState(false);
   const inputRef = useRef(null);
 
-  const addTag = (skill) => {
-    const s = skill.trim().toLowerCase();
-    if (s && !tags.includes(s)) setTags((prev) => [...prev, s]);
+  const addSkill = (name) => {
+    const s = name.trim().toLowerCase();
+    if (s && !(s in skills)) {
+      setSkills((prev) => ({ ...prev, [s]: 3 })); // default: Intermediate
+    }
     setInput('');
     inputRef.current?.focus();
   };
 
-  const removeTag = (skill) => setTags((prev) => prev.filter((t) => t !== skill));
+  const removeSkill = (name) =>
+    setSkills((prev) => { const n = { ...prev }; delete n[name]; return n; });
+
+  const updateLevel = (name, level) =>
+    setSkills((prev) => ({ ...prev, [name]: level }));
 
   const handleKeyDown = (e) => {
     if ((e.key === 'Enter' || e.key === ',') && input.trim()) {
       e.preventDefault();
-      addTag(input);
+      addSkill(input);
     }
-    if (e.key === 'Backspace' && !input && tags.length) {
-      setTags((prev) => prev.slice(0, -1));
+    if (e.key === 'Backspace' && !input) {
+      const keys = Object.keys(skills);
+      if (keys.length) removeSkill(keys[keys.length - 1]);
     }
   };
 
   const handleSubmit = () => {
-    const all = input.trim()
-      ? [...tags, ...input.split(',').map((s) => s.trim()).filter(Boolean)]
-      : tags;
-    if (all.length) onAnalyze(all);
+    const pending = input.trim();
+    const final   = pending ? { ...skills, [pending.toLowerCase()]: 3 } : skills;
+    if (Object.keys(final).length) onAnalyze(final);
   };
 
-  const unusedSuggestions = SUGGESTIONS.filter((s) => !tags.includes(s));
+  const skillCount       = Object.keys(skills).length;
+  const unusedSuggestions = SUGGESTIONS.filter((s) => !(s in skills));
 
   return (
     <div className="mx-auto max-w-2xl animate-slide-up">
-      {/* Glass search bar */}
       <div
         className={`relative rounded-3xl border transition-all duration-300 ${
           focused
@@ -47,26 +100,17 @@ const SkillInput = ({ onAnalyze, isLoading }) => {
         } backdrop-blur-xl p-4`}
         onClick={() => inputRef.current?.focus()}
       >
-        {/* Tags + input row */}
+        {/* Chips + input */}
         <div className="flex flex-wrap items-center gap-2 min-h-[2.5rem]">
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              className="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 px-3 py-1 text-xs font-medium text-indigo-300"
-            >
-              {tag}
-              <button
-                onClick={(e) => { e.stopPropagation(); removeTag(tag); }}
-                className="ml-0.5 rounded-full text-indigo-400 hover:text-white transition-colors"
-                aria-label={`Remove ${tag}`}
-              >
-                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </span>
+          {Object.entries(skills).map(([skill, level]) => (
+            <SkillChip
+              key={skill}
+              skill={skill}
+              level={level}
+              onChange={(l) => updateLevel(skill, l)}
+              onRemove={() => removeSkill(skill)}
+            />
           ))}
-
           <input
             ref={inputRef}
             type="text"
@@ -75,19 +119,33 @@ const SkillInput = ({ onAnalyze, isLoading }) => {
             onKeyDown={handleKeyDown}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder={tags.length === 0 ? 'Type a skill and press Enter — e.g. python, react, sql…' : 'Add more skills…'}
+            placeholder={skillCount === 0 ? 'Type a skill and press Enter — e.g. python, react, sql…' : 'Add more skills…'}
             className="flex-1 min-w-[180px] bg-transparent text-sm text-slate-100 placeholder-slate-500 outline-none"
           />
         </div>
 
-        {/* Divider + action row */}
+        {/* Proficiency legend */}
+        {skillCount > 0 && (
+          <div className="mt-2 flex flex-wrap gap-2 text-[10px] text-slate-600">
+            {Object.entries(PROFICIENCY_LABELS).map(([n, label]) => (
+              <span key={n} className="flex items-center gap-1">
+                <span className="font-bold text-slate-400">{n}</span> = {label}
+              </span>
+            ))}
+            <span className="text-slate-600">· use +/− on each chip to adjust</span>
+          </div>
+        )}
+
+        {/* Action row */}
         <div className="mt-3 flex items-center justify-between border-t border-slate-700/50 pt-3">
           <p className="text-xs text-slate-500">
-            {tags.length > 0 ? `${tags.length} skill${tags.length > 1 ? 's' : ''} added` : 'Press Enter or comma to add each skill'}
+            {skillCount > 0
+              ? `${skillCount} skill${skillCount > 1 ? 's' : ''} · questions adapt to your proficiency levels`
+              : 'Press Enter or comma to add each skill'}
           </p>
           <button
             onClick={handleSubmit}
-            disabled={isLoading || (tags.length === 0 && !input.trim())}
+            disabled={isLoading || (skillCount === 0 && !input.trim())}
             className="btn-primary text-xs px-5 py-2.5"
           >
             {isLoading ? (
@@ -115,11 +173,7 @@ const SkillInput = ({ onAnalyze, isLoading }) => {
         <div className="mt-4 flex flex-wrap items-center gap-2 animate-fade-in">
           <span className="text-xs text-slate-600">Quick add:</span>
           {unusedSuggestions.slice(0, 7).map((s) => (
-            <button
-              key={s}
-              onClick={() => addTag(s)}
-              className="skill-tag cursor-pointer"
-            >
+            <button key={s} onClick={() => addSkill(s)} className="skill-tag cursor-pointer">
               + {s}
             </button>
           ))}

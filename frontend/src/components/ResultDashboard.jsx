@@ -1,5 +1,6 @@
 import React from 'react';
 import ProgressRing from './ProgressRing';
+import ConsultantChat from './ConsultantChat';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -224,6 +225,14 @@ const ResultDashboard = ({ result, domain, onRetake, onNewSearch }) => {
           </div>
         </div>
       )}
+
+      {/* ── AI Consultant Chat ──────────────────────────────────────────────── */}
+      <ConsultantChat
+        domain={domain}
+        quizScore={quizScore}
+        readinessScore={readinessScore}
+        weakAreas={weakAreas}
+      />
     </div>
   );
 };
