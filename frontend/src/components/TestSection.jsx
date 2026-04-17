@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { buildAuthHeaders } from '../utils/auth';
 
 const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -9,9 +10,62 @@ const Spinner = ({ size = 8 }) => (
   </svg>
 );
 
+// Change: mirror backend proportional weighting logic for immediate UI feedback while loading.
+const calculateQuestionDistribution = (skillsProfile = {}, totalQuestions = 10) => {
+  const entries = Object.entries(skillsProfile || {});
+  if (!entries.length) return { General: totalQuestions };
+
+  const totalUnits = entries.reduce((sum, [, level]) => sum + Math.max(1, Number(level) || 1), 0);
+  if (!totalUnits) return { General: totalQuestions };
+
+  const distribution = {};
+  const remainders = [];
+
+  for (const [skill, level] of entries) {
+    const fraction = (Math.max(1, Number(level) || 1) / totalUnits) * totalQuestions;
+    distribution[skill] = Math.round(fraction);
+    remainders.push([skill, fraction - Math.floor(fraction)]);
+  }
+
+  Object.keys(distribution).forEach((skill) => {
+    if (distribution[skill] <= 0) distribution[skill] = 1;
+  });
+
+  let currentTotal = Object.values(distribution).reduce((a, b) => a + b, 0);
+  if (currentTotal > totalQuestions) {
+    for (const [skill] of Object.entries(distribution).sort((a, b) => b[1] - a[1])) {
+      while (currentTotal > totalQuestions && distribution[skill] > 1) {
+        distribution[skill] -= 1;
+        currentTotal -= 1;
+      }
+      if (currentTotal === totalQuestions) break;
+    }
+  } else if (currentTotal < totalQuestions) {
+    for (const [skill] of remainders.sort((a, b) => b[1] - a[1])) {
+      if (currentTotal >= totalQuestions) break;
+      distribution[skill] += 1;
+      currentTotal += 1;
+    }
+  }
+
+  while (Object.values(distribution).reduce((a, b) => a + b, 0) < totalQuestions) {
+    const first = Object.keys(distribution)[0];
+    distribution[first] += 1;
+  }
+  while (Object.values(distribution).reduce((a, b) => a + b, 0) > totalQuestions) {
+    for (const skill of Object.keys(distribution)) {
+      if (distribution[skill] > 1 && Object.values(distribution).reduce((a, b) => a + b, 0) > totalQuestions) {
+        distribution[skill] -= 1;
+      }
+    }
+  }
+
+  return distribution;
+};
+
 // ── Main ──────────────────────────────────────────────────────────────────────
 // skills: { [skillName]: proficiency } OR string[] (legacy)
-const TestSection = ({ domain, skills = {}, onComplete, onBack }) => {
+const TestSection = ({ domain, skills = {}, onComplete, onBack, token, user }) => {
   const [questions, setQuestions]     = useState([]);
   const [answers, setAnswers]         = useState({});
   const [loading, setLoading]         = useState(true);
@@ -19,6 +73,7 @@ const TestSection = ({ domain, skills = {}, onComplete, onBack }) => {
   const [submitting, setSubmitting]   = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [isLLM, setIsLLM]             = useState(false);
+  const [questionDistribution, setQuestionDistribution] = useState({});
 
   // Normalise skills to object form
   const skillsObj = Array.isArray(skills)
@@ -32,12 +87,17 @@ const TestSection = ({ domain, skills = {}, onComplete, onBack }) => {
     setFetchError(null);
     setAnswers({});
 
+    // Change: pre-compute and show expected skill-wise question breakdown during generation.
+    setQuestionDistribution(calculateQuestionDistribution(skillsObj, 10));
+
     // Pass skills as JSON query param so backend can generate LLM questions
     const skillsParam = Object.keys(skillsObj).length
       ? `?skills=${encodeURIComponent(JSON.stringify(skillsObj))}`
       : '';
 
-    fetch(`${API}/questions/${encodeURIComponent(domain)}${skillsParam}`)
+    fetch(`${API}/questions/${encodeURIComponent(domain)}${skillsParam}`, {
+      headers: buildAuthHeaders(token),
+    })
       .then(async (res) => {
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -50,10 +110,19 @@ const TestSection = ({ domain, skills = {}, onComplete, onBack }) => {
         if (qs.length === 0) throw new Error('Server returned 0 questions for this domain.');
         setQuestions(qs);
         setIsLLM(data.source === 'llm');
+        // Change: prefer backend-confirmed distribution when available.
+        if (data.question_distribution && typeof data.question_distribution === 'object') {
+          setQuestionDistribution(data.question_distribution);
+        }
       })
       .catch((err) => setFetchError(err.message))
       .finally(() => setLoading(false));
-  }, [domain]);
+  }, [domain, token, JSON.stringify(skillsObj)]);
+
+  // Change: render loading message requested by spec with dynamic breakdown text.
+  const distributionSummary = Object.entries(questionDistribution)
+    .map(([skill, count]) => `${count} question${count !== 1 ? 's' : ''} for ${skill}`)
+    .join(', ');
 
   const handleAnswer = (questionId, optionIndex) =>
     setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
@@ -70,8 +139,13 @@ const TestSection = ({ domain, skills = {}, onComplete, onBack }) => {
     try {
       const res = await fetch(`${API}/evaluate`, {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ domain, answers: answersPayload, skills: skillsObj }),
+        headers: buildAuthHeaders(token, { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({
+          domain,
+          answers: answersPayload,
+          skills: skillsObj,
+          user_id: user?.id ? String(user.id) : null,
+        }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -124,12 +198,14 @@ const TestSection = ({ domain, skills = {}, onComplete, onBack }) => {
           <div>
             <p className="text-white font-semibold">
               {Object.keys(skillsObj).length
-                ? 'Generating your personalised assessment…'
+                ? 'Generating Assessment'
                 : 'Loading questions…'}
             </p>
             {Object.keys(skillsObj).length > 0 && (
               <p className="mt-1 text-xs text-slate-500">
-                The AI is tailoring questions to your proficiency levels. This takes a few seconds.
+                {distributionSummary
+                  ? `Crafting your test: ${distributionSummary}...`
+                  : 'The AI is tailoring questions to your proficiency levels. This takes a few seconds.'}
               </p>
             )}
           </div>

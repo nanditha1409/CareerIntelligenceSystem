@@ -9,7 +9,7 @@ import time
 from typing import AsyncIterator
 
 import google.generativeai as genai
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, field_validator, model_validator
 
 # ── Config ────────────────────────────────────────────────────────────────────
 _API_KEY = os.getenv("GEMINI_API_KEY", "")
@@ -35,10 +35,44 @@ class GeneratedQuestion(BaseModel):
     correct_index: int
     topic_tag: str
 
-    def model_post_init(self, __context):
-        assert len(self.options) == 4,          "options must have exactly 4 items"
-        assert 0 <= self.correct_index <= 3,    "correct_index must be 0-3"
-        assert self.text.strip(),               "text must not be empty"
+    # Change: strict per-question validation prevents malformed payloads from reaching frontend.
+    @field_validator("options")
+    @classmethod
+    def validate_options(cls, value: list[str]) -> list[str]:
+        if len(value) != 4:
+            raise ValueError("options must have exactly 4 items")
+        cleaned = [str(v).strip() for v in value]
+        if any(not option for option in cleaned):
+            raise ValueError("options must not contain empty values")
+        return cleaned
+
+    # Change: enforce frontend-compatible bounds for answer index.
+    @field_validator("correct_index")
+    @classmethod
+    def validate_correct_index(cls, value: int) -> int:
+        if value < 0 or value > 3:
+            raise ValueError("correct_index must be 0-3")
+        return value
+
+    # Change: normalize text fields and block empty/whitespace-only values.
+    @field_validator("text", "topic_tag")
+    @classmethod
+    def validate_text_fields(cls, value: str) -> str:
+        cleaned = str(value).strip()
+        if not cleaned:
+            raise ValueError("text fields must not be empty")
+        return cleaned
+
+
+class GeneratedQuestionSet(BaseModel):
+    # Change: validate the complete LLM payload shape before API response is sent.
+    items: list[GeneratedQuestion]
+
+    @model_validator(mode="after")
+    def validate_exact_count(self):
+        if len(self.items) != 10:
+            raise ValueError("LLM must return exactly 10 questions")
+        return self
 
 
 def _skills_fingerprint(skills: dict[str, int]) -> str:
@@ -46,43 +80,34 @@ def _skills_fingerprint(skills: dict[str, int]) -> str:
     return "|".join(f"{k}:{v}" for k, v in sorted(skills.items()))
 
 
-def _build_generation_prompt(domain: str, skills: dict[str, int]) -> str:
-    skill_lines = "\n".join(
-        f"  - {skill}: {'Beginner (1-2)' if lvl <= 2 else 'Intermediate (3)' if lvl == 3 else 'Expert (4-5)'} (level {lvl}/5)"
-        for skill, lvl in skills.items()
-    )
-    difficulty_note = (
-        "Most skills are beginner level — focus on fundamental conceptual questions."
-        if sum(skills.values()) / max(len(skills), 1) <= 2.5
-        else "Skills are mixed/advanced — include scenario-based and architectural questions for expert-level skills."
-    )
+def _build_generation_prompt(domain: str, skills: dict[str, int], distribution: dict[str, int]) -> str:
+    # Change: include weighted distribution directly in prompt to enforce proportional generation.
+    distribution_line = ", ".join(f"{count} {skill}" for skill, count in distribution.items())
+    level_map = "\n".join(f"  - {skill}: level {skills.get(skill, 3)}/5" for skill in distribution.keys())
 
-    return f"""You are a senior technical interviewer. Generate exactly 10 multiple-choice questions for a **{domain}** role.
+    return f"""Act as an expert technical interviewer.
+Generate exactly 10 multiple-choice questions for domain "{domain}" based on this distribution: {distribution_line}.
 
-Candidate skill proficiencies (1=Beginner, 5=Expert):
-{skill_lines}
+Skill levels:
+{level_map}
 
-Difficulty guidance: {difficulty_note}
-- For skills rated 1-2: ask fundamental conceptual questions.
-- For skills rated 4-5: ask scenario-based or architectural questions.
+Difficulty scaling:
+- Level 1: Basic Syntax / Fundamentals
+- Level 2: Core Concepts
+- Level 3: Problem Solving / Applied Scenarios
+- Level 4: Advanced Implementation
+- Level 5: System Design / Architecture
 
-Return ONLY a valid JSON array (no markdown, no explanation) with exactly this schema:
-[
-  {{
-    "id": "q1",
-    "text": "Question text here?",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correct_index": 0,
-    "topic_tag": "Topic Name"
-  }}
-]
+Return ONLY a JSON array (no markdown, no prose) with schema:
+[{{"id":"q1","text":"...","options":["...","...","...","..."],"correct_index":0,"topic_tag":"..."}}]
 
-Rules:
-- Exactly 10 questions, each with exactly 4 options.
-- correct_index is 0-3 (index of the correct option in the options array).
-- topic_tag is a short subject label (e.g. "Cryptography", "React Hooks", "System Design").
-- Questions must be specific to {domain} — no generic trivia.
-- Do NOT include the answer in the question text."""
+Hard rules:
+- Exactly 10 questions total.
+- Exactly 4 options per question.
+- correct_index must be 0-3.
+- topic_tag should map to the relevant skill/topic.
+- Keep questions domain-specific to "{domain}".
+- Use IDs q1...q10 in order."""
 
 
 def _parse_llm_questions(raw: str) -> list[dict]:
@@ -118,16 +143,24 @@ def _parse_llm_questions(raw: str) -> list[dict]:
                 "sub_topic":     q.topic_tag,
                 "topic_tag":     q.topic_tag,
             })
-        except (ValidationError, AssertionError):
+        except (ValidationError, ValueError):
             continue  # skip malformed questions
 
-    if len(validated) < 5:
-        raise ValueError(f"Only {len(validated)} valid questions parsed — too few")
+    # Change: strict payload-level validation required by frontend safety requirements.
+    # Change: validate only the first 10 questions to enforce exact frontend contract.
+    first_ten = validated[:10]
+    GeneratedQuestionSet(items=[GeneratedQuestion(**{
+        "id": q["id"],
+        "text": q["text"],
+        "options": q["options"],
+        "correct_index": q["correct_index"],
+        "topic_tag": q["topic_tag"],
+    }) for q in first_ten])
 
-    return validated[:10]
+    return first_ten
 
 
-async def generate_questions(domain: str, skills: dict[str, int]) -> list[dict]:
+async def generate_questions(domain: str, skills: dict[str, int], distribution: dict[str, int]) -> list[dict]:
     """
     Generate 10 questions via Gemini. Returns cached result if available.
     Raises RuntimeError if LLM is not configured.
@@ -135,7 +168,8 @@ async def generate_questions(domain: str, skills: dict[str, int]) -> list[dict]:
     if not _CONFIGURED:
         raise RuntimeError("GEMINI_API_KEY not set")
 
-    fp  = _skills_fingerprint(skills)
+    # Change: cache key now includes distribution to guarantee score/evaluation consistency.
+    fp  = f"{_skills_fingerprint(skills)}|dist:{_skills_fingerprint(distribution)}"
     key = (domain, fp)
     now = time.time()
 
@@ -145,7 +179,7 @@ async def generate_questions(domain: str, skills: dict[str, int]) -> list[dict]:
         if now - ts < _CACHE_TTL:
             return cached
 
-    prompt = _build_generation_prompt(domain, skills)
+    prompt = _build_generation_prompt(domain, skills, distribution)
     model  = genai.GenerativeModel(_GEN_MODEL)
 
     response = model.generate_content(

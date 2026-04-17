@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import Navbar from './components/Navbar';
 import SkillInput from './components/SkillInput';
 import RecommendationCard from './components/RecommendationCard';
@@ -9,9 +9,15 @@ import XAIPanel from './components/XAIPanel';
 import HowItWorks from './components/HowItWorks';
 import DomainsGrid from './components/DomainsGrid';
 import ResultsHistory, { saveResult } from './components/ResultsHistory';
+import AuthPage from './components/AuthPage';
+import { buildAuthHeaders, clearAuth, getStoredAuth, saveAuth } from './utils/auth';
 
 const API  = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
-const VIEW = { HOME: 'home', RECS: 'recs', TEST: 'test', RESULTS: 'results' };
+// Addition: lazy-load the Practice view so the large static question config stays isolated.
+const PracticeTab = React.lazy(() => import('./components/PracticeTab'));
+
+// Addition: extend the existing view routing with a dedicated Practice dashboard page.
+const VIEW = { HOME: 'home', AUTH: 'auth', RECS: 'recs', TEST: 'test', RESULTS: 'results', PRACTICE: 'practice' };
 
 const STATS = [
   { value: '9+',  label: 'Career domains' },
@@ -22,6 +28,7 @@ const STATS = [
 
 export default function App() {
   const [view, setView]                       = useState(VIEW.HOME);
+  const [auth, setAuth]                       = useState(() => getStoredAuth());
   const [isLoading, setIsLoading]             = useState(false);
   const [error, setError]                     = useState(null);
   const [currentSkills, setCurrentSkills]     = useState({});
@@ -31,20 +38,31 @@ export default function App() {
   const [selectedDomain, setSelectedDomain]   = useState('');
   const [testResult, setTestResult]           = useState(null);
   const inputRef = useRef(null);
+  const token = auth?.access_token || '';
+  const user = auth?.user || null;
 
   // When navigating back to HOME via nav links, scroll to the right section
   const handleNavClick = (sectionId) => {
     if (view !== VIEW.HOME) setView(VIEW.HOME);
   };
 
+  // Addition: dedicated handler for the new Practice page so existing nav behavior stays unchanged.
+  const handlePracticeOpen = () => {
+    setView(VIEW.PRACTICE);
+  };
+
   const handleAnalyze = async (skillsObj) => {
+    if (!token) {
+      setView(VIEW.AUTH);
+      return;
+    }
     setError(null);
     setIsLoading(true);
     try {
       const res = await fetch(`${API}/recommend-career`, {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ skills: skillsObj }),
+        headers: buildAuthHeaders(token, { 'Content-Type': 'application/json' }),
+        body:    JSON.stringify({ skills: skillsObj, user_id: user?.id ? String(user.id) : null }),
       });
       if (!res.ok) {
         const err = await res.json();
@@ -64,6 +82,10 @@ export default function App() {
   };
 
   const handleTakeTest = (domain) => {
+    if (!token) {
+      setView(VIEW.AUTH);
+      return;
+    }
     setSelectedDomain(domain);
     setTestResult(null);
     setView(VIEW.TEST);
@@ -87,10 +109,26 @@ export default function App() {
 
   // "Re-test" from history — jump straight to test with no prior skills
   const handleRetest = (domain) => {
+    if (!token) {
+      setView(VIEW.AUTH);
+      return;
+    }
     setSelectedDomain(domain);
     setCurrentSkills({});
     setTestResult(null);
     setView(VIEW.TEST);
+  };
+
+  const handleAuthSuccess = (authPayload) => {
+    saveAuth(authPayload);
+    setAuth(authPayload);
+    setView(VIEW.HOME);
+  };
+
+  const handleLogout = () => {
+    clearAuth();
+    setAuth(null);
+    handleNewSearch();
   };
 
   return (
@@ -104,8 +142,20 @@ export default function App() {
       </div>
 
       <Navbar
-        onLaunch={() => { handleNewSearch(); setTimeout(() => inputRef.current?.focus(), 100); }}
+        onLaunch={() => {
+          if (!token) {
+            setView(VIEW.AUTH);
+            return;
+          }
+          handleNewSearch();
+          setTimeout(() => inputRef.current?.focus(), 100);
+        }}
         onNavClick={handleNavClick}
+        onPracticeClick={handlePracticeOpen}
+        isPracticeActive={view === VIEW.PRACTICE}
+        user={user}
+        onAuthClick={() => setView(VIEW.AUTH)}
+        onLogout={handleLogout}
       />
 
       <main className="relative mx-auto max-w-6xl px-6 py-12 lg:px-8">
@@ -116,6 +166,13 @@ export default function App() {
             <span>{error}</span>
             <button onClick={() => setError(null)} className="ml-4 text-rose-400 hover:text-white transition-colors">✕</button>
           </div>
+        )}
+
+        {view === VIEW.AUTH && (
+          <AuthPage
+            onAuthSuccess={handleAuthSuccess}
+            onBack={() => setView(VIEW.HOME)}
+          />
         )}
 
         {/* ── HOME ─────────────────────────────────────────────────────────── */}
@@ -197,6 +254,8 @@ export default function App() {
             skills={currentSkills}
             onComplete={handleTestComplete}
             onBack={() => setView(recommendations.length ? VIEW.RECS : VIEW.HOME)}
+            token={token}
+            user={user}
           />
         )}
 
@@ -207,7 +266,23 @@ export default function App() {
             domain={selectedDomain}
             onRetake={handleRetake}
             onNewSearch={handleNewSearch}
+            token={token}
           />
+        )}
+
+        {/* Addition: isolated Practice route that reuses the dashboard container without changing surrounding layout. */}
+        {view === VIEW.PRACTICE && (
+          <React.Suspense
+            fallback={
+              <div className="glass p-12 text-center">
+                <p className="section-label">Practice</p>
+                <p className="mt-3 text-sm text-slate-400">Loading company-wise practice questions…</p>
+              </div>
+            }
+          >
+            {/* Addition: pass the existing skill profile so Practice can prioritize relevant questions locally. */}
+            <PracticeTab onBack={() => setView(VIEW.HOME)} currentSkills={currentSkills} />
+          </React.Suspense>
         )}
       </main>
 

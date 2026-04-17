@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { buildAuthHeaders } from '../utils/auth';
 
 const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
@@ -27,7 +28,7 @@ const Bubble = ({ role, text, streaming }) => (
 );
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-const ConsultantChat = ({ domain, quizScore, readinessScore, weakAreas }) => {
+const ConsultantChat = ({ domain, quizScore, readinessScore, weakAreas, token }) => {
   const [open, setOpen]       = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -58,7 +59,7 @@ const ConsultantChat = ({ domain, quizScore, readinessScore, weakAreas }) => {
     try {
       const res = await fetch(`${API}/api/chat`, {
         method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: buildAuthHeaders(token, { 'Content-Type': 'application/json' }),
         body:    JSON.stringify({
           domain,
           quiz_score:      quizScore,

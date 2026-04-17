@@ -1,3 +1,10 @@
+from config.domain_manifest import (
+    DOMAIN_MANIFEST,
+    KEYWORD_MAPPING,
+    LEGACY_DOMAIN_ALIASES,
+)
+
+
 # ── Canonical skill list (must match dataset columns) ────────────────────────
 SKILLS_LIST = [
     "python", "sql", "ml", "html", "css", "js",
@@ -16,6 +23,8 @@ SKILL_ALIASES = {
     "javascript": "js", "nodejs": "node", "reactjs": "react", "next.js": "react",
     "nextjs": "react", "vuejs": "js", "angular": "js",
     "machine learning": "ml", "machinelearning": "ml", "deep learning": "ml",
+    "deep-learning": "ml", "dl": "ml", "nlp": "ml", "neural networks": "ml",
+    "neural network": "ml", "artificial intelligence": "ml", "ai": "ml",
     "aws cloud": "aws", "amazon web services": "aws",
     "linux os": "linux", "ubuntu": "linux", "debian": "linux",
     "excel sheets": "excel", "google sheets": "excel",
@@ -33,28 +42,14 @@ SKILL_ALIASES = {
 
 # ── Domain master skill sets ──────────────────────────────────────────────────
 DOMAIN_SKILLS = {
-    "Data Scientist":        ["python", "ml", "sql", "tensorflow", "pytorch", "spark", "git", "tableau", "excel"],
-    "AI-ML Engineer":        ["python", "ml", "tensorflow", "pytorch", "fastapi", "docker", "git", "aws", "kubernetes"],
-    "Data Analyst":          ["sql", "excel", "powerbi", "tableau", "python", "git", "spark"],
-    "Full Stack Developer":  ["html", "css", "js", "react", "node", "typescript", "mongodb", "graphql", "git", "docker"],
-    "Software Engineer":     ["python", "java", "dsa", "git", "html", "css", "js", "rust", "go"],
-    "DevOps Engineer":       ["docker", "linux", "aws", "kubernetes", "git", "python", "redis", "go"],
-    "Cybersecurity Analyst": ["networking", "security", "linux", "python", "git"],
-    "UI/UX Designer":        ["figma", "html", "css", "js", "react", "typescript"],
-    "Backend Developer":     ["python", "node", "sql", "fastapi", "django", "docker", "redis", "mongodb", "git"],
+    domain: manifest["required_skills"]
+    for domain, manifest in DOMAIN_MANIFEST.items()
 }
 
 # ── Domain metadata ───────────────────────────────────────────────────────────
 DOMAIN_DATA = {
-    "Data Scientist":        {"salary": "₹6–15 LPA",  "demand": "High"},
-    "AI-ML Engineer":        {"salary": "₹10–18 LPA", "demand": "Very High"},
-    "Data Analyst":          {"salary": "₹4–10 LPA",  "demand": "High"},
-    "Full Stack Developer":  {"salary": "₹5–14 LPA",  "demand": "Very High"},
-    "Software Engineer":     {"salary": "₹5–12 LPA",  "demand": "High"},
-    "DevOps Engineer":       {"salary": "₹6–15 LPA",  "demand": "High"},
-    "Cybersecurity Analyst": {"salary": "₹7–12 LPA",  "demand": "High"},
-    "UI/UX Designer":        {"salary": "₹4–10 LPA",  "demand": "Medium"},
-    "Backend Developer":     {"salary": "₹5–13 LPA",  "demand": "High"},
+    domain: {"salary": manifest["salary"], "demand": manifest["demand"]}
+    for domain, manifest in DOMAIN_MANIFEST.items()
 }
 
 # ── Learning resources mapped to skills ──────────────────────────────────────
@@ -241,12 +236,99 @@ DOMAIN_QUESTIONS = {
 # ── Core logic functions ──────────────────────────────────────────────────────
 
 def normalize_skills(user_skills: list[str]) -> list[str]:
-    """Normalise and alias-resolve a list of raw skill strings."""
-    result = []
+    """Normalise, alias-resolve, and deduplicate raw skill strings."""
+    result: list[str] = []
+    seen: set[str] = set()
+
     for skill in user_skills:
-        s = skill.strip().lower().replace("-", " ")
-        result.append(SKILL_ALIASES.get(s, s))
-    return list(set(result))  # deduplicate
+        lowered = str(skill).lower().strip().replace("-", " ")
+        if not lowered:
+            continue
+
+        canonical = SKILL_ALIASES.get(lowered, lowered)
+        if canonical not in seen:
+            seen.add(canonical)
+            result.append(canonical)
+
+        for keyword in KEYWORD_MAPPING:
+            keyword_value = keyword.lower().strip()
+            if keyword_value and (keyword_value in lowered or lowered in keyword_value):
+                mapped_skill = SKILL_ALIASES.get(keyword_value)
+                if mapped_skill and mapped_skill not in seen:
+                    seen.add(mapped_skill)
+                    result.append(mapped_skill)
+
+    return result
+
+
+def resolve_domain_name(domain: str) -> str:
+    normalized = str(domain).strip()
+    if not normalized:
+        return normalized
+    return LEGACY_DOMAIN_ALIASES.get(normalized, normalized)
+
+
+def _keyword_domains_for_skills(user_skills: list[str]) -> dict[str, int]:
+    domain_hits: dict[str, int] = {}
+    for skill in user_skills:
+        lowered = str(skill).lower().strip()
+        if not lowered:
+            continue
+        for keyword, domain in KEYWORD_MAPPING.items():
+            keyword_value = keyword.lower().strip()
+            if keyword_value and (keyword_value in lowered or lowered in keyword_value):
+                canonical_domain = resolve_domain_name(domain)
+                domain_hits[canonical_domain] = domain_hits.get(canonical_domain, 0) + 1
+    return domain_hits
+
+
+def calculate_compatibility_score(user_skills: list[str], domain: str) -> float:
+    """
+    Compatibility score formula:
+        (matched user skills / required domain skills) * 100
+    """
+    canonical_domain = resolve_domain_name(domain)
+    normalized_user_skills = set(normalize_skills(user_skills))
+    required_skills = DOMAIN_SKILLS.get(canonical_domain, [])
+    if not required_skills:
+        return 0.0
+    matched_count = sum(1 for skill in required_skills if skill.lower().strip() in normalized_user_skills)
+    return round((matched_count / len(required_skills)) * 100, 1)
+
+
+def rank_domains_by_compatibility(user_skills: list[str], limit: int = 3) -> list[dict]:
+    normalized_user_skills = normalize_skills(user_skills)
+    user_skill_set = set(normalized_user_skills)
+    keyword_hits = _keyword_domains_for_skills(user_skills)
+    ranked: list[dict] = []
+
+    for domain, required_skills in DOMAIN_SKILLS.items():
+        matched_skills = [skill for skill in required_skills if skill.lower().strip() in user_skill_set]
+        score = calculate_compatibility_score(normalized_user_skills, domain)
+        keyword_match_count = keyword_hits.get(domain, 0)
+
+        if score <= 0 and keyword_match_count <= 0:
+            continue
+
+        ranked.append(
+            {
+                "domain": domain,
+                "matched_skills": matched_skills,
+                "missing_skills": [skill for skill in required_skills if skill not in user_skill_set],
+                "compatibility_score": score,
+                "keyword_match_count": keyword_match_count,
+            }
+        )
+
+    ranked.sort(
+        key=lambda item: (
+            item["compatibility_score"],
+            item["keyword_match_count"],
+            len(item["matched_skills"]),
+        ),
+        reverse=True,
+    )
+    return ranked[:limit]
 
 
 def compute_skill_gap(user_skills: list[str], domain: str) -> dict:
@@ -254,13 +336,15 @@ def compute_skill_gap(user_skills: list[str], domain: str) -> dict:
     Compare user skills against the domain master set.
     Returns a dict with missing_skills, matched_skills, and match_percentage.
     """
-    master = set(DOMAIN_SKILLS.get(domain, []))
-    user_set = set(user_skills)
-    matched = list(master & user_set)
-    missing = list(master - user_set)
-    pct = round((len(matched) / len(master)) * 100, 1) if master else 0.0
+    canonical_domain = resolve_domain_name(domain)
+    normalized_user_skills = normalize_skills(user_skills)
+    master = DOMAIN_SKILLS.get(canonical_domain, [])
+    user_set = set(normalized_user_skills)
+    matched = [skill for skill in master if skill.lower().strip() in user_set]
+    missing = [skill for skill in master if skill.lower().strip() not in user_set]
+    pct = calculate_compatibility_score(normalized_user_skills, canonical_domain)
     return {
-        "domain": domain,
+        "domain": canonical_domain,
         "matched_skills": matched,
         "missing_skills": missing,
         "match_percentage": pct,

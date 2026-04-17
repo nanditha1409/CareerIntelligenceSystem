@@ -6,7 +6,7 @@ const NAV_ITEMS = [
   { label: 'Results',      id: 'results' },
 ];
 
-const Navbar = ({ onLaunch, onNavClick }) => {
+const Navbar = ({ onLaunch, onNavClick, onPracticeClick, isPracticeActive, user, onAuthClick, onLogout }) => {
   const [scrolled, setScrolled]   = useState(false);
   const [active, setActive]       = useState('');
   const [menuOpen, setMenuOpen]   = useState(false);
@@ -80,16 +80,43 @@ const Navbar = ({ onLaunch, onNavClick }) => {
               {label}
             </button>
           ))}
+          {/* Addition: Practice tab entry reuses the existing nav button styling without changing layout structure. */}
+          <button
+            onClick={onPracticeClick}
+            className={`rounded-full px-4 py-2 text-sm transition-all duration-150 ${
+              isPracticeActive
+                ? 'bg-indigo-500/15 text-white font-medium'
+                : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+            }`}
+          >
+            Practice
+          </button>
         </nav>
 
         {/* Right side */}
         <div className="flex items-center gap-3">
+          {user ? (
+            <div className="hidden sm:flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs text-slate-300">
+              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              <span>{user.full_name}</span>
+            </div>
+          ) : (
+            <button onClick={onAuthClick} className="btn-ghost text-xs px-4 py-2">
+              Sign In
+            </button>
+          )}
+
           <button onClick={onLaunch} className="btn-primary text-xs px-4 py-2">
             <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
             </svg>
             Launch analysis
           </button>
+          {user && (
+            <button onClick={onLogout} className="btn-ghost text-xs px-4 py-2 hidden sm:inline-flex">
+              Logout
+            </button>
+          )}
 
           {/* Mobile hamburger */}
           <button
@@ -113,6 +140,18 @@ const Navbar = ({ onLaunch, onNavClick }) => {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden border-t border-white/[0.06] bg-slate-950/95 backdrop-blur-xl px-6 py-4 space-y-1">
+          {/* Addition: mobile Practice entry mirrors the existing mobile nav item pattern. */}
+          <button
+            onClick={() => {
+              setMenuOpen(false);
+              if (onPracticeClick) onPracticeClick();
+            }}
+            className={`block w-full text-left rounded-2xl px-4 py-3 text-sm transition-colors ${
+              isPracticeActive ? 'bg-indigo-500/15 text-white' : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+            }`}
+          >
+            Practice
+          </button>
           {NAV_ITEMS.map(({ label, id }) => (
             <button
               key={id}

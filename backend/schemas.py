@@ -112,3 +112,81 @@ class EvaluateResponse(BaseModel):
     weak_areas: List[str]
     readiness: ReadinessScore
     resources: List[ResourceItem]
+
+
+class UserRegister(BaseModel):
+    email: str
+    password: str
+    full_name: str
+
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+
+class UserPublic(BaseModel):
+    id: int
+    email: str
+    full_name: str
+
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserPublic
+
+
+# Optional request model for intelligence endpoint.
+class CareerIntelligenceRequest(BaseModel):
+    skills: Any
+    top_domains: Optional[List[str]] = None
+    domain: Optional[str] = None
+    company: Optional[str] = None
+    question_count: Optional[int] = 10
+    user_id: Optional[str] = None
+    weak_topics: Optional[List[str]] = None
+
+    @field_validator("skills")
+    @classmethod
+    def validate_skills_payload(cls, v):
+        # Keep compatibility with both historical list input and dict input.
+        if isinstance(v, list):
+            return [s.strip().lower() for s in v if isinstance(s, str) and s.strip()]
+        if isinstance(v, dict):
+            cleaned = {}
+            for k, value in v.items():
+                if isinstance(k, str) and k.strip():
+                    cleaned[k.strip().lower()] = max(1, min(5, int(value)))
+            return cleaned
+        raise ValueError("skills must be a list or dict")
+
+    def skills_as_list(self) -> List[str]:
+        if isinstance(self.skills, dict):
+            return list(self.skills.keys())
+        return self.skills
+
+    def skills_as_dict(self) -> Dict[str, int]:
+        if isinstance(self.skills, dict):
+            return self.skills
+        return {s: 3 for s in self.skills}
+
+
+# Addition: lightweight response models for additive ML endpoints.
+class AnalyticsTopicItem(BaseModel):
+    topic: str
+    accuracy: float
+    attempts: int
+
+
+class AnalyticsResponse(BaseModel):
+    topic_accuracy: List[AnalyticsTopicItem]
+    timeline: List[Dict[str, Any]]
+    strengths: List[str]
+    weaknesses: List[str]
+
+
+class ResumeAnalysisResponse(BaseModel):
+    extracted_text_preview: str
+    skills: List[str]
+    recommendations: List[RecommendationItem]

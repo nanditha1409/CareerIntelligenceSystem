@@ -44,7 +44,7 @@ const WeakTopicRow = ({ sub_topic, wrong, total }) => {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
-const ResultDashboard = ({ result, domain, onRetake, onNewSearch }) => {
+const ResultDashboard = ({ result, domain, onRetake, onNewSearch, token }) => {
   if (!result) return null;
 
   // ── Safe field extraction ─────────────────────────────────────────────────
@@ -232,6 +232,7 @@ const ResultDashboard = ({ result, domain, onRetake, onNewSearch }) => {
         quizScore={quizScore}
         readinessScore={readinessScore}
         weakAreas={weakAreas}
+        token={token}
       />
     </div>
   );
