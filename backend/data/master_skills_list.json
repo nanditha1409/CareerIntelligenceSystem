@@ -1,0 +1,27 @@
+{
+  "skills": [
+    "python", "java", "javascript", "typescript", "c", "c++", "go", "rust", "r", "scala",
+    "sql", "mysql", "postgresql", "sqlite", "mongodb", "redis", "cassandra", "dynamodb",
+    "html", "css", "react", "angular", "vue", "node", "express", "django", "fastapi", "flask",
+    "tensorflow", "pytorch", "keras", "scikit-learn", "xgboost", "lightgbm", "huggingface",
+    "ml", "deep learning", "nlp", "computer vision", "reinforcement learning", "llm",
+    "docker", "kubernetes", "aws", "azure", "gcp", "terraform", "ansible", "jenkins",
+    "git", "linux", "bash", "powershell", "ci/cd", "devops", "sre",
+    "pandas", "numpy", "spark", "hadoop", "kafka", "airflow", "dbt",
+    "tableau", "powerbi", "excel", "looker", "metabase",
+    "figma", "sketch", "adobe xd", "wireframes", "prototyping",
+    "solidity", "web3", "ethereum", "smart contracts", "blockchain",
+    "networking", "security", "cryptography", "penetration testing", "siem",
+    "selenium", "cypress", "pytest", "junit", "jest", "postman",
+    "flutter", "dart", "swift", "kotlin", "react native", "android", "ios",
+    "graphql", "rest api", "grpc", "microservices", "rabbitmq", "kafka",
+    "prometheus", "grafana", "elk", "datadog", "observability",
+    "dsa", "algorithms", "data structures", "system design", "oop", "design patterns",
+    "agile", "scrum", "jira", "confluence", "roadmapping", "product strategy",
+    "statistics", "probability", "linear algebra", "calculus", "feature engineering",
+    "rtos", "microcontroller", "firmware", "arm", "fpga", "uart", "spi", "i2c",
+    "helm", "istio", "service mesh", "load balancing", "cdn", "s3", "ec2",
+    "redux", "graphql", "websockets", "oauth", "jwt", "authentication",
+    "communication", "teamwork", "leadership", "presentation", "documentation"
+  ]
+}

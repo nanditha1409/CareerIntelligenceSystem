@@ -10,3 +10,16 @@ python-dotenv==1.0.1
 pypdf==4.3.1
 python-docx==1.1.2
 requests==2.32.3
+numpy>=1.26.0
+
+# Task 1: XGBoost classifier (optional — falls back to RandomForest if absent)
+xgboost>=2.0.0
+
+# Task 2 & 3: NLP resume parsing + ML pipeline
+pdfplumber>=0.11.0
+pymupdf>=1.24.0
+spacy>=3.7.0
+# After install run: python -m spacy download en_core_web_sm
+
+# Task 3: Semantic similarity (optional — falls back to TF-IDF if absent)
+sentence-transformers>=2.7.0

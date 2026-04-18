@@ -25,6 +25,7 @@ from schemas import (
     CareerIntelligenceRequest,
     AnalyticsResponse,
     ResumeAnalysisResponse,
+    ResumeUploadResponse,
 )
 from database import (
     init_db,
@@ -56,6 +57,12 @@ from ml.inference import (
     predict_domain_recommendations,
     predict_next_difficulty,
 )
+# Task 1: CSV-based RandomForest/XGBoost classifier with XAI feature importance
+from ml.train_classifier import get_prediction_confidence
+# Task 3: Semantic similarity engine (TF-IDF cosine + optional SBERT)
+from ml.similarity import find_similar_domains
+# Task 2: NLP resume parser (pdfplumber + spaCy NER)
+from utils.resume_parser import build_resume_analysis
 import llm_service
 
 # ── App ───────────────────────────────────────────────────────────────────────
@@ -379,7 +386,7 @@ def _build_recommendation_payload(skills_list: list[str]) -> tuple[list[str], li
     normalized_skills = normalize_skills(skills_list)
     ranked_matches: list[dict[str, Any]] = []
 
-    # Addition: ML-first domain recommendations with coefficient-based explanations.
+    # Task 1: ML-first domain recommendations with coefficient-based explanations.
     try:
         ml_matches = predict_domain_recommendations(normalized_skills, top_k=3)
         for match in ml_matches:
@@ -400,6 +407,24 @@ def _build_recommendation_payload(skills_list: list[str]) -> tuple[list[str], li
             )
     except Exception:
         ranked_matches = []
+
+    # Task 1: CSV classifier confidence scores + XAI feature importance (additive layer).
+    classifier_results: dict[str, dict] = {}
+    try:
+        clf_predictions = get_prediction_confidence(normalized_skills, top_k=5)
+        for pred in clf_predictions:
+            classifier_results[pred["domain"]] = pred
+    except Exception:
+        pass
+
+    # Task 3: Semantic similarity scores (replaces hardcoded keyword→domain mapping).
+    semantic_results: dict[str, dict] = {}
+    try:
+        sem_matches = find_similar_domains(normalized_skills, top_k=5)
+        for sem in sem_matches:
+            semantic_results[sem["domain"]] = sem
+    except Exception:
+        pass
 
     # Addition: retain the original deterministic ranking as a production fallback.
     if not ranked_matches:
@@ -423,15 +448,38 @@ def _build_recommendation_payload(skills_list: list[str]) -> tuple[list[str], li
         ml_reasoning = match.get("explanation", [])
         model_source = match.get("model_source", "rules")
 
+        # Task 1 & 4: attach classifier confidence + XAI feature importance.
+        clf_data = classifier_results.get(domain, {})
+        confidence_score   = clf_data.get("confidence_score")
+        matching_keywords  = clf_data.get("matching_keywords", [])
+
+        # Task 4: build feature_importance list from classifier importances.
+        feature_importance = []
+        if matching_keywords:
+            feature_importance = [
+                {"skill": skill, "importance": round(1.0 / (i + 1), 3)}
+                for i, skill in enumerate(matching_keywords)
+            ]
+
+        # Task 3: blend semantic similarity into the confidence score when available.
+        sem_data = semantic_results.get(domain, {})
+        if sem_data and confidence_score is None:
+            confidence_score = sem_data.get("similarity_score")
+            matching_keywords = matching_keywords or sem_data.get("matching_keywords", [])
+
         recommendations.append(
             {
-                "domain": domain,
-                "confidence": match["compatibility_score"],
-                "salary": DOMAIN_DATA[domain]["salary"],
-                "demand": DOMAIN_DATA[domain]["demand"],
-                "reason": ml_reasoning or [f"You match {skill.upper()}" for skill in matched_skills] or ["Keyword mapping indicates domain alignment"],
-                "top_skills": match.get("top_features", [])[:3] or matched_skills[:3] or fallback_skills,
-                "model_source": model_source,
+                "domain":             domain,
+                "confidence":         match["compatibility_score"],
+                "salary":             DOMAIN_DATA[domain]["salary"],
+                "demand":             DOMAIN_DATA[domain]["demand"],
+                "reason":             ml_reasoning or [f"You match {skill.upper()}" for skill in matched_skills] or ["Keyword mapping indicates domain alignment"],
+                "top_skills":         match.get("top_features", [])[:3] or matched_skills[:3] or fallback_skills,
+                "model_source":       model_source,
+                # Task 1 & 3 extensions (backward-compatible optional fields):
+                "confidence_score":   confidence_score,
+                "matching_keywords":  matching_keywords,
+                "feature_importance": feature_importance,
             }
         )
         skill_gap_list.append(gap)
@@ -993,6 +1041,133 @@ async def analyze_resume(
     db.commit()
 
     return build_resume_summary(extracted_text, extracted_skills, recommendations)
+
+
+@app.post("/api/upload-resume", response_model=ResumeUploadResponse)
+async def upload_resume(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User | None = Depends(get_current_user),
+):
+    """
+    Task 2: NLP resume upload endpoint.
+    Uses pdfplumber/PyMuPDF for text extraction and spaCy NER for skill detection.
+    Feeds extracted skills directly into the ML classifier pipeline.
+    Also returns semantic similarity matches (Task 3).
+    """
+    content = await file.read()
+
+    # Task 2: NLP extraction via the new resume_parser utility.
+    analysis = build_resume_analysis(file.filename or "resume", content)
+    extracted_text   = analysis["extracted_text"]
+    extracted_skills = analysis["skills"]
+    years_exp        = analysis["years_of_experience"]
+
+    if not extracted_skills:
+        raise HTTPException(
+            status_code=422,
+            detail="No recognizable skills were extracted. Ensure the resume contains technical skill keywords.",
+        )
+
+    # Feed extracted skills into the full ML recommendation pipeline.
+    _, recommendations, _, _ = _build_recommendation_payload(extracted_skills)
+    top_recommendation = recommendations[0] if recommendations else None
+
+    # Task 3: semantic similarity matches as an additional signal.
+    semantic_matches: list[dict] = []
+    try:
+        semantic_matches = find_similar_domains(extracted_skills, top_k=3)
+    except Exception:
+        pass
+
+    # Persist snapshot.
+    db.add(
+        ResumeSnapshot(
+            user_id=str(current_user.id) if current_user else None,
+            filename=file.filename or "resume",
+            extracted_text=extracted_text[:5000],
+            extracted_skills=",".join(extracted_skills),
+            top_domain=top_recommendation["domain"] if top_recommendation else None,
+            confidence=top_recommendation["confidence"] if top_recommendation else 0.0,
+        )
+    )
+    db.commit()
+
+    return {
+        "extracted_text_preview": extracted_text[:1000],
+        "skills":                 extracted_skills,
+        "years_of_experience":    years_exp,
+        "recommendations":        recommendations,
+        "semantic_matches":       semantic_matches,
+    }
+
+
+@app.post("/api/ml/predict")
+def ml_predict(data: SkillsInput):
+    """
+    Task 4: ML prediction endpoint.
+    Accepts a list of skills, runs the TF-IDF + RandomForest pipeline,
+    and returns top domain matches with confidence scores and feature importance.
+
+    Request:  { "skills": ["python", "pytorch", "nlp"] }
+    Response: {
+        "top_matches": [{"domain": "AI/ML Engineer", "confidence": 0.89}, ...],
+        "feature_importance": ["python", "nlp", "pytorch"]
+    }
+    """
+    from ml.train_model import MODEL_PATH, VECTORIZER_PATH, train
+
+    skills_list = data.skills_as_list()
+    if not skills_list:
+        raise HTTPException(status_code=422, detail="At least one skill is required.")
+
+    # Load or train artifacts
+    try:
+        if os.path.exists(MODEL_PATH) and os.path.exists(VECTORIZER_PATH):
+            rf_model   = joblib.load(MODEL_PATH)
+            vectorizer = joblib.load(VECTORIZER_PATH)
+        else:
+            artifact   = train()
+            rf_model   = artifact["model"]
+            vectorizer = artifact["vectorizer"]
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"ML model unavailable: {exc}")
+
+    skill_doc = " ".join(skills_list)
+    try:
+        features = vectorizer.transform([skill_doc])
+        probs    = rf_model.predict_proba(features)[0]
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Prediction failed: {exc}")
+
+    # Top matches sorted by confidence
+    ranked = sorted(
+        zip(rf_model.classes_, probs),
+        key=lambda x: x[1],
+        reverse=True,
+    )
+    top_matches = [
+        {"domain": domain, "confidence": round(float(conf), 4)}
+        for domain, conf in ranked[:5]
+        if conf > 0.0
+    ]
+
+    # Feature importance: RF feature importances filtered to active input tokens
+    feature_names  = np.array(vectorizer.get_feature_names_out())
+    importances    = rf_model.feature_importances_
+    active_indices = features.nonzero()[1]
+
+    top_features = sorted(
+        ((feature_names[i], importances[i]) for i in active_indices),
+        key=lambda x: x[1],
+        reverse=True,
+    )
+    feature_importance = [name for name, _ in top_features[:10] if name]
+
+    return {
+        "top_matches":        top_matches,
+        "feature_importance": feature_importance,
+    }
 
 
 @app.post("/api/export/recommendations")

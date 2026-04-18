@@ -67,6 +67,10 @@ class RecommendationItem(BaseModel):
     demand: str
     reason: List[str]
     top_skills: List[str]
+    # Task 1 & 4: ML classifier confidence and XAI feature contributions
+    confidence_score: Optional[float] = None       # 0-100 from skill_classifier
+    matching_keywords: Optional[List[str]] = None  # top skills that drove the prediction
+    feature_importance: Optional[List[dict]] = None  # [{skill, importance}] for XAI panel
 
 
 class SkillGapItem(BaseModel):
@@ -190,3 +194,12 @@ class ResumeAnalysisResponse(BaseModel):
     extracted_text_preview: str
     skills: List[str]
     recommendations: List[RecommendationItem]
+
+
+# Task 2: NLP resume upload response — extends the base with experience + semantic matches
+class ResumeUploadResponse(BaseModel):
+    extracted_text_preview: str
+    skills: List[str]
+    years_of_experience: Optional[int] = None
+    recommendations: List[RecommendationItem]
+    semantic_matches: Optional[List[dict]] = None  # from similarity.py
