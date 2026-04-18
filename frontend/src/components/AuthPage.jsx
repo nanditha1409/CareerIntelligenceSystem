@@ -1,144 +1,244 @@
 import React, { useState } from 'react';
 
+// Integration point: uses the same VITE_API_URL env var as the rest of the app
 const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
-const AuthPage = ({ onAuthSuccess, onBack }) => {
-  const [mode, setMode] = useState('signin');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+const INITIAL_FORM = {
+  name: '',
+  email: '',
+  password: '',
+};
+
+// AuthPage — UI faithfully replicated from the CIS branch AuthScreen.jsx
+// Layout: full-screen two-column (hero left, form right) with background blobs,
+// light/dark theme toggle, and cyan-to-indigo gradient accents.
+// theme and onToggleTheme are now provided by App.jsx (global theme system).
+const AuthPage = ({ onAuthSuccess, onBack, theme = 'dark', onToggleTheme }) => {
+  const [mode, setMode] = useState('signup');
+  const [form, setForm] = useState(INITIAL_FORM);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  // Removed: internal theme state — now controlled globally via props
 
-  const isSignIn = mode === 'signin';
+  const updateField = (field) => (event) => {
+    setForm((prev) => ({ ...prev, [field]: event.target.value }));
+  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const switchMode = (nextMode) => {
+    setMode(nextMode);
     setError('');
-    setSubmitting(true);
+    setForm(INITIAL_FORM);
+  };
 
-    const endpoint = isSignIn ? '/api/auth/login' : '/api/auth/register';
-    const body = isSignIn
-      ? { email: email, password: password }
-      : { email: email, password: password, full_name: fullName };
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError('');
+    setIsSubmitting(true);
+
+    // Integration point: map to existing backend endpoints /api/auth/login and /api/auth/register
+    // Source used /auth/signup and /auth/login — adapted to match this project's API contract
+    const endpoint = mode === 'signup' ? '/api/auth/register' : '/api/auth/login';
+    const payload =
+      mode === 'signup'
+        ? { full_name: form.name.trim(), email: form.email.trim(), password: form.password }
+        : { email: form.email.trim(), password: form.password };
 
     try {
-      // Fix: Ensure all authentication API calls send data in proper JSON format.
-      // Explicitly matching the requested field names: email, password, full_name.
       const res = await fetch(`${API}${endpoint}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json().catch(() => ({}));
-
       if (!res.ok) {
-        // Safe error handling: Handle 400 / 401 responses with meaningful messages.
-        if (res.status === 401) {
-          throw new Error('Invalid email or password.');
-        } else if (res.status === 400) {
-          throw new Error(data.detail || 'Bad request. Please check your input.');
-        } else {
-          throw new Error(data.detail || 'Authentication failed.');
-        }
+        throw new Error(data.detail || 'Authentication failed.');
       }
 
+      // Integration point: pass full auth payload (access_token + user) to App.jsx handler
+      // Source passed only data.user — here we pass the full data object to preserve token storage
       onAuthSuccess?.(data);
+      setForm(INITIAL_FORM);
     } catch (err) {
       setError(err.message);
     } finally {
-      setSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="mx-auto max-w-md">
-      <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 backdrop-blur-xl shadow-2xl shadow-indigo-900/20">
-        <div className="mb-7">
-          <p className="section-label">Private Career Cockpit</p>
-          <h2 className="mt-2 text-3xl font-semibold text-white">
-            {isSignIn ? 'Sign in to continue' : 'Create your account'}
-          </h2>
-          <p className="mt-2 text-sm text-slate-400">
-            Secure access to your recommendations, assessments, and AI guidance.
-          </p>
-        </div>
+    // Integration point: theme class scoped to this component only — does not leak to the rest of the app
+    // Rendered inside a fixed full-screen overlay in App.jsx, so min-h-screen fills the viewport correctly
+    <div className={`theme-${theme} relative min-h-screen overflow-hidden bg-slate-950 text-slate-100 transition-colors duration-300`}>
+      {/* Background glow blobs — exact positions from source */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute left-[-10%] top-[-8%] h-80 w-80 rounded-full bg-cyan-500/12 blur-[120px]" />
+        <div className="absolute right-[-5%] top-[20%] h-[28rem] w-[28rem] rounded-full bg-indigo-500/14 blur-[140px]" />
+        <div className="absolute bottom-[-8%] left-[30%] h-72 w-72 rounded-full bg-emerald-500/10 blur-[120px]" />
+      </div>
 
-        <div className="mb-6 grid grid-cols-2 rounded-2xl border border-white/10 bg-slate-900/60 p-1">
-          <button
-            onClick={() => setMode('signin')}
-            className={`rounded-xl px-4 py-2 text-sm transition-all duration-200 ${
-              isSignIn ? 'bg-indigo-500/20 text-white' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            onClick={() => setMode('signup')}
-            className={`rounded-xl px-4 py-2 text-sm transition-all duration-200 ${
-              !isSignIn ? 'bg-indigo-500/20 text-white' : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Create Account
-          </button>
-        </div>
+      {/* Two-column grid layout */}
+      <div className="relative mx-auto grid min-h-screen max-w-7xl items-center gap-12 px-6 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          {!isSignIn && (
+        {/* Theme toggle — delegates to global onToggleTheme from App.jsx */}
+        <button
+          type="button"
+          onClick={onToggleTheme}
+          className="absolute right-6 top-6 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-slate-200 backdrop-blur-xl transition-colors hover:bg-white/10"
+        >
+          {theme === 'dark' ? 'Light' : 'Dark'} mode
+        </button>
+
+        {/* ── LEFT: Hero section ─────────────────────────────────────────── */}
+        <section className="space-y-8">
+          <div className="inline-flex items-center gap-3 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-cyan-200">
+            Personalized career intelligence
+          </div>
+
+          <div className="max-w-2xl space-y-5">
+            <h1 className="text-5xl font-black leading-[0.95] tracking-tight text-white sm:text-6xl lg:text-7xl">
+              Build your
+              <span className="block bg-gradient-to-r from-cyan-300 via-sky-300 to-indigo-300 bg-clip-text text-transparent">
+                private career cockpit
+              </span>
+            </h1>
+            <p className="max-w-xl text-lg leading-relaxed text-slate-300">
+              Create an account to save recommendations, track every assessment, and unlock a personal dashboard built around your progress.
+            </p>
+          </div>
+
+          {/* Feature cards grid */}
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              ['Persistent history', 'Every skill analysis and test attempt linked to your account.'],
+              ['Smarter retakes', 'Next rounds can focus on the topics you missed most.'],
+              ['Personal dashboard', 'A single place to monitor growth, readiness, and next steps.'],
+            ].map(([title, text]) => (
+              <div key={title} className="rounded-3xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
+                <p className="text-sm font-semibold text-white">{title}</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-400">{text}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── RIGHT: Auth form card ──────────────────────────────────────── */}
+        <section className="glass noise relative mx-auto w-full max-w-md p-8">
+
+          {/* Mode toggle tabs */}
+          <div className="mb-6 flex rounded-full border border-white/10 bg-slate-900/70 p-1">
+            {[
+              ['signup', 'Create account'],
+              ['login', 'Sign in'],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => switchMode(value)}
+                className={`flex-1 rounded-full px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
+                  mode === value
+                    ? 'bg-gradient-to-r from-cyan-500 to-indigo-500 text-white shadow-glow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Heading */}
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-white">
+              {mode === 'signup' ? 'Start your workspace' : 'Welcome back'}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-400">
+              {mode === 'signup'
+                ? "Sign up once and we'll start building your personal recommendation history immediately."
+                : "Log in to continue from your saved analyses and assessments."}
+            </p>
+          </div>
+
+          {/* Form */}
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            {mode === 'signup' && (
+              <div>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  Full name
+                </label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={updateField('name')}
+                  className="input-base"
+                  placeholder="Career explorer"
+                  autoComplete="name"
+                  required
+                />
+              </div>
+            )}
+
             <div>
-              <label className="mb-1.5 block text-xs uppercase tracking-wide text-slate-500">Full Name</label>
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Email
+              </label>
               <input
-                className="input-base py-3"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Ada Lovelace"
+                type="email"
+                value={form.email}
+                onChange={updateField('email')}
+                className="input-base"
+                placeholder="you@example.com"
+                autoComplete="email"
                 required
               />
             </div>
-          )}
 
-          <div>
-            <label className="mb-1.5 block text-xs uppercase tracking-wide text-slate-500">Email</label>
-            <input
-              className="input-base py-3"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              required
-            />
-          </div>
+            <div>
+              <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                Password
+              </label>
+              <input
+                type="password"
+                value={form.password}
+                onChange={updateField('password')}
+                className="input-base"
+                placeholder={mode === 'signup' ? 'Minimum 6 characters' : 'Enter your password'}
+                autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                required
+              />
+            </div>
 
-          <div>
-            <label className="mb-1.5 block text-xs uppercase tracking-wide text-slate-500">Password</label>
-            <input
-              className="input-base py-3"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 8 characters"
-              minLength={8}
-              required
-            />
-          </div>
+            {error && (
+              <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                {error}
+              </div>
+            )}
 
-          {error && (
-            <p className="rounded-2xl border border-rose-500/25 bg-rose-500/10 px-4 py-2.5 text-sm text-rose-300">
-              {error}
-            </p>
-          )}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-cyan-500 to-indigo-500 px-6 py-3.5 text-sm font-semibold text-white transition-transform duration-200 hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
+            >
+              {isSubmitting
+                ? mode === 'signup'
+                  ? 'Creating account…'
+                  : 'Signing in…'
+                : mode === 'signup'
+                ? 'Create account'
+                : 'Sign in'}
+            </button>
 
-          <button className="btn-primary w-full" type="submit" disabled={submitting}>
-            {submitting ? 'Please wait…' : isSignIn ? 'Sign In' : 'Create Account'}
-          </button>
-
-          <button type="button" onClick={onBack} className="btn-ghost w-full text-xs">
-            Back to home
-          </button>
-        </form>
+            {/* Integration point: onBack navigates back to HOME view in App.jsx */}
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="inline-flex w-full items-center justify-center rounded-2xl border border-white/10 bg-transparent px-6 py-3 text-sm font-semibold text-slate-400 transition-colors hover:text-white hover:border-white/20"
+              >
+                Back to home
+              </button>
+            )}
+          </form>
+        </section>
       </div>
     </div>
   );

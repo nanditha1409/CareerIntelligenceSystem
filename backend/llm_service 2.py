@@ -1,6 +1,6 @@
 """
-LLM service — Gemini-backed question generation and consultant chat.
-Falls back to questions.json if the API key is missing or the call fails.
+LLM service — Phi-3 (Ollama) backed question generation and consultant chat.
+Falls back to questions.json if the call fails.
 """
 import json
 import os
@@ -8,19 +8,14 @@ import re
 import time
 from typing import AsyncIterator
 
-import google.generativeai as genai
+import requests
 from pydantic import BaseModel, ValidationError, field_validator, model_validator
 
 # ── Config ────────────────────────────────────────────────────────────────────
-_API_KEY = os.getenv("GEMINI_API_KEY", "")
-_CONFIGURED = False
-
-if _API_KEY and _API_KEY != "your_gemini_api_key_here":
-    genai.configure(api_key=_API_KEY)
-    _CONFIGURED = True
-
-_GEN_MODEL = "gemini-1.5-flash"
-_CHAT_MODEL = "gemini-1.5-flash"
+# Changed: We now use local Phi-3 via Ollama instead of Gemini.
+_OLLAMA_URL = "http://localhost:11434/api/generate"
+_MODEL = "phi3"
+_CONFIGURED = True # Assume Ollama is running if this task is requested
 
 # ── In-memory question cache  {(domain, skills_fingerprint): (timestamp, questions)} ──
 _QUESTION_CACHE: dict[tuple, tuple[float, list]] = {}
@@ -107,12 +102,23 @@ Hard rules:
 
 def _parse_llm_questions(raw: str) -> list[dict]:
     """Extract and validate JSON array from LLM response."""
+    # Strip markdown code fences if present
     raw = re.sub(r"```(?:json)?", "", raw).strip()
+
+    # Find the JSON array
     match = re.search(r"\[.*\]", raw, re.DOTALL)
     if not match:
         raise ValueError("No JSON array found in LLM response")
 
-    data = json.loads(match.group())
+    try:
+        data = json.loads(match.group())
+    except json.JSONDecodeError:
+        # Try to fix common Phi-3 JSON issues (trailing commas, etc.)
+        # This is a very basic attempt.
+        cleaned = re.sub(r",\s*\]", "]", match.group())
+        cleaned = re.sub(r",\s*\}", "}", cleaned)
+        data = json.loads(cleaned)
+
     if not isinstance(data, list):
         raise ValueError("LLM response is not a JSON array")
 
@@ -125,38 +131,25 @@ def _parse_llm_questions(raw: str) -> list[dict]:
         try:
             q = GeneratedQuestion(**item)
             validated.append({
-                "id": q.id,
-                "text": q.text,
-                "question": q.text,
-                "options": q.options,
+                "id":            q.id,
+                "text":          q.text,
+                "question":      q.text,       # alias
+                "options":       q.options,
                 "correct_index": q.correct_index,
-                "sub_topic": q.topic_tag,
-                "topic_tag": q.topic_tag,
+                "sub_topic":     q.topic_tag,
+                "topic_tag":     q.topic_tag,
             })
         except (ValidationError, ValueError):
-            continue
+            continue  # skip malformed questions
 
-    first_ten = validated[:10]
-    GeneratedQuestionSet(items=[GeneratedQuestion(**{
-        "id": q["id"],
-        "text": q["text"],
-        "options": q["options"],
-        "correct_index": q["correct_index"],
-        "topic_tag": q["topic_tag"],
-    }) for q in first_ten])
-
-    return first_ten
+    return validated[:10]
 
 
 async def generate_questions(domain: str, skills: dict[str, int], distribution: dict[str, int]) -> list[dict]:
     """
-    Generate 10 questions via Gemini. Returns cached result if available.
-    Raises RuntimeError if LLM is not configured.
+    Generate 10 questions via local Phi-3. Returns cached result if available.
     """
-    if not _CONFIGURED:
-        raise RuntimeError("GEMINI_API_KEY not set")
-
-    fp = f"{_skills_fingerprint(skills)}|dist:{_skills_fingerprint(distribution)}"
+    fp  = f"{_skills_fingerprint(skills)}|dist:{_skills_fingerprint(distribution)}"
     key = (domain, fp)
     now = time.time()
 
@@ -166,36 +159,80 @@ async def generate_questions(domain: str, skills: dict[str, int], distribution: 
             return cached
 
     prompt = _build_generation_prompt(domain, skills, distribution)
-    model = genai.GenerativeModel(_GEN_MODEL)
-    response = model.generate_content(
-        prompt,
-        generation_config=genai.GenerationConfig(
-            temperature=0.7,
-            max_output_tokens=4096,
-        ),
-    )
+    
+    try:
+        response = requests.post(
+            _OLLAMA_URL,
+            json={
+                "model": _MODEL,
+                "prompt": prompt,
+                "stream": False,
+                "format": "json", # Phi-3 supports JSON mode
+            },
+            timeout=60,
+        )
+        response.raise_for_status()
+        raw_text = response.json().get("response", "")
+        questions = _parse_llm_questions(raw_text)
+        
+        if not questions:
+            raise ValueError("No valid questions generated")
+            
+        _QUESTION_CACHE[key] = (now, questions)
+        return questions
+    except Exception as e:
+        print(f"Phi-3 generation failed: {e}")
+        # Return empty list to trigger fallback to static questions in app.py
+        return []
 
-    questions = _parse_llm_questions(response.text)
-    _QUESTION_CACHE[key] = (now, questions)
-    return questions
+
+async def generate_with_prompt(prompt: str) -> str:
+    """
+    Generic prompt completion via Phi-3.
+    """
+    try:
+        response = requests.post(
+            _OLLAMA_URL,
+            json={
+                "model": _MODEL,
+                "prompt": prompt,
+                "stream": False,
+            },
+            timeout=60,
+        )
+        response.raise_for_status()
+        return response.json().get("response", "")
+    except Exception as e:
+        print(f"Phi-3 generation failed: {e}")
+        return ""
 
 
 async def stream_chat(system_prompt: str, user_message: str) -> AsyncIterator[str]:
     """
-    Stream a Gemini chat response token by token.
+    Stream a Phi-3 chat response token by token.
     """
-    if not _CONFIGURED:
-        raise RuntimeError("GEMINI_API_KEY not set")
-
-    model = genai.GenerativeModel(
-        _CHAT_MODEL,
-        system_instruction=system_prompt,
-    )
-    response = model.generate_content(
-        user_message,
-        generation_config=genai.GenerationConfig(temperature=0.6, max_output_tokens=1024),
-        stream=True,
-    )
-    for chunk in response:
-        if chunk.text:
-            yield chunk.text
+    try:
+        full_prompt = f"{system_prompt}\n\nUser: {user_message}" if system_prompt else user_message
+        
+        response = requests.post(
+            _OLLAMA_URL,
+            json={
+                "model": _MODEL,
+                "prompt": full_prompt,
+                "stream": True,
+            },
+            stream=True,
+            timeout=60,
+        )
+        response.raise_for_status()
+        
+        for line in response.iter_lines():
+            if line:
+                chunk = json.loads(line)
+                text = chunk.get("response", "")
+                if text:
+                    yield text
+                if chunk.get("done"):
+                    break
+    except Exception as e:
+        yield f"AI service unavailable (Phi-3): {str(e)}"

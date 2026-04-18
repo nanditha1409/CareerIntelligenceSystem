@@ -42,16 +42,11 @@ async def generate_company_questions(
     company: str | None,
     question_count: int = 10,
 ) -> list[dict]:
-    if not llm_service._CONFIGURED:
-        raise RuntimeError("GEMINI_API_KEY not set")
-
+    # Changed: uses llm_service.generate_with_prompt (Phi-3) instead of direct Gemini call.
     prompt = build_company_quiz_prompt(domain, skills, distribution, company, question_count)
-    model = llm_service.genai.GenerativeModel(llm_service._GEN_MODEL)
-    response = model.generate_content(
-        prompt,
-        generation_config=llm_service.genai.GenerationConfig(
-            temperature=0.7,
-            max_output_tokens=4096,
-        ),
-    )
-    return llm_service._parse_llm_questions(response.text)[:question_count]
+    raw_text = await llm_service.generate_with_prompt(prompt)
+    
+    if not raw_text:
+        return []
+
+    return llm_service._parse_llm_questions(raw_text)[:question_count]

@@ -101,3 +101,229 @@
   transform: rotate(-90deg);
   transform-origin: 50% 50%;
 }
+
+/* ── Light theme overrides (scoped to AuthPage theme toggle) ──────────────── */
+.theme-light {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(14, 165, 233, 0.16), transparent 34%),
+    radial-gradient(circle at 90% 18%, rgba(99, 102, 241, 0.13), transparent 30%),
+    linear-gradient(135deg, #f8fafc 0%, #eef7ff 48%, #fff7ed 100%) !important;
+  color: #172033 !important;
+}
+
+.theme-light .glass {
+  background: rgba(255, 255, 255, 0.72) !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+}
+
+.theme-light [class*="bg-slate-950"],
+.theme-light [class*="bg-slate-900"],
+.theme-light [class*="bg-slate-800"] {
+  background-color: rgba(255, 255, 255, 0.76) !important;
+}
+
+.theme-light [class*="border-slate-"],
+.theme-light [class*="border-white"] {
+  border-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+.theme-light [class*="text-white"],
+.theme-light [class*="text-slate-100"],
+.theme-light [class*="text-slate-200"],
+.theme-light [class*="text-slate-300"] {
+  color: #172033 !important;
+}
+
+.theme-light [class*="text-slate-400"],
+.theme-light [class*="text-slate-500"],
+.theme-light [class*="text-slate-600"] {
+  color: #667085 !important;
+}
+
+.theme-light .btn-ghost {
+  background: rgba(255, 255, 255, 0.62) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+  color: #243044 !important;
+}
+
+.theme-light .btn-ghost:hover {
+  background: rgba(79, 70, 229, 0.08) !important;
+  border-color: rgba(79, 70, 229, 0.28) !important;
+}
+
+.theme-light .input-base {
+  background: rgba(255, 255, 255, 0.78) !important;
+  border-color: rgba(15, 23, 42, 0.14) !important;
+  color: #172033 !important;
+}
+
+.theme-light .input-base::placeholder {
+  color: #8a94a6 !important;
+}
+
+.theme-light .skill-tag {
+  background: rgba(79, 70, 229, 0.08) !important;
+  border-color: rgba(79, 70, 229, 0.22) !important;
+  color: #4338ca !important;
+}
+
+/* ── Global light/dark mode (body.dark / body.light) ─────────────────────── */
+
+body.dark {
+  background: #0f172a;
+  color: white;
+}
+
+body.light {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+/* ── Light mode: page background & root wrapper ───────────────────────────── */
+body.light .relative.min-h-screen {
+  background: #f1f5f9 !important;
+}
+
+/* Fixed background blobs — hide in light mode, they look bad on white */
+body.light [aria-hidden].pointer-events-none.fixed {
+  opacity: 0.3;
+}
+
+/* ── Light mode: text overrides ───────────────────────────────────────────── */
+body.light .text-white,
+body.light .text-slate-100,
+body.light .text-slate-200 {
+  color: #0f172a !important;
+}
+
+body.light .text-slate-300,
+body.light .text-slate-400 {
+  color: #475569 !important;
+}
+
+body.light .text-slate-500,
+body.light .text-slate-600 {
+  color: #94a3b8 !important;
+}
+
+/* ── Light mode: card / glass surfaces ────────────────────────────────────── */
+body.light .glass,
+body.light [class*="bg-slate-900"],
+body.light [class*="bg-slate-950"] {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Domain cards, history rows, step cards */
+body.light [class*="border-white/"] {
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+/* ── Light mode: navbar ───────────────────────────────────────────────────── */
+body.light header {
+  background: rgba(241, 245, 249, 0.92) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Logo text */
+body.light header .text-white {
+  color: #0f172a !important;
+}
+
+/* Nav buttons */
+body.light header button {
+  color: #475569;
+}
+
+body.light header button:hover {
+  color: #0f172a;
+  background: rgba(15, 23, 42, 0.05) !important;
+}
+
+/* User badge */
+body.light header [class*="bg-white/"] {
+  background: rgba(15, 23, 42, 0.06) !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+  color: #334155 !important;
+}
+
+/* ── Light mode: inputs ───────────────────────────────────────────────────── */
+body.light .input-base {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(15, 23, 42, 0.18) !important;
+  color: #0f172a !important;
+}
+
+body.light .input-base::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* SkillInput container */
+body.light [class*="bg-slate-900/"] {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-color: rgba(15, 23, 42, 0.12) !important;
+}
+
+body.light [class*="border-slate-700"] {
+  border-color: rgba(15, 23, 42, 0.15) !important;
+}
+
+/* ── Light mode: buttons ──────────────────────────────────────────────────── */
+body.light .btn-ghost {
+  border-color: rgba(15, 23, 42, 0.2) !important;
+  color: #334155 !important;
+  background: transparent !important;
+}
+
+body.light .btn-ghost:hover {
+  background: rgba(79, 70, 229, 0.08) !important;
+  border-color: rgba(79, 70, 229, 0.3) !important;
+  color: #1e1b4b !important;
+}
+
+/* ── Light mode: skill tags ───────────────────────────────────────────────── */
+body.light .skill-tag {
+  background: rgba(79, 70, 229, 0.08) !important;
+  border-color: rgba(79, 70, 229, 0.25) !important;
+  color: #4338ca !important;
+}
+
+/* ── Light mode: section headings ─────────────────────────────────────────── */
+body.light h1,
+body.light h2,
+body.light h3 {
+  color: #0f172a !important;
+}
+
+/* ── Light mode: dividers ─────────────────────────────────────────────────── */
+body.light [class*="border-white/[0.05]"],
+body.light [class*="border-white/[0.06]"],
+body.light [class*="border-white/[0.07]"],
+body.light [class*="border-white/[0.08]"] {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+/* ── Light mode: footer ───────────────────────────────────────────────────── */
+body.light footer {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+  color: #94a3b8 !important;
+}
+
+/* ── Light mode: mobile menu ──────────────────────────────────────────────── */
+body.light [class*="bg-slate-950/95"] {
+  background: rgba(241, 245, 249, 0.97) !important;
+}
+
+/* ── Light mode: progress bar steps ──────────────────────────────────────── */
+body.light [class*="bg-slate-700"],
+body.light [class*="bg-slate-800"] {
+  background-color: #cbd5e1 !important;
+}
+
+/* ── Light mode: empty state box ─────────────────────────────────────────── */
+body.light [class*="border-dashed"] {
+  border-color: rgba(15, 23, 42, 0.15) !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+}

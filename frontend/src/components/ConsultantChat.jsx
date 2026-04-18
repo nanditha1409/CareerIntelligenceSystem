@@ -57,6 +57,8 @@ const ConsultantChat = ({ domain, quizScore, readinessScore, weakAreas, token })
     setMessages((prev) => [...prev, { role: 'assistant', text: '' }]);
 
     try {
+      // Addition: use the existing chat endpoint so Gemini stays primary,
+      // while backend can safely fall back to phi3 only when Gemini is unavailable.
       const res = await fetch(`${API}/api/chat`, {
         method:  'POST',
         headers: buildAuthHeaders(token, { 'Content-Type': 'application/json' }),
@@ -73,7 +75,7 @@ const ConsultantChat = ({ domain, quizScore, readinessScore, weakAreas, token })
 
       const reader  = res.body.getReader();
       const decoder = new TextDecoder();
-      let   buffer  = '';
+      let buffer = '';
 
       while (true) {
         const { done, value } = await reader.read();
@@ -101,7 +103,7 @@ const ConsultantChat = ({ domain, quizScore, readinessScore, weakAreas, token })
               });
             }
           } catch {
-            // skip malformed chunk
+            // Addition: ignore malformed SSE chunks so the UI never crashes.
           }
         }
       }

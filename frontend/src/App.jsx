@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import SkillInput from './components/SkillInput';
 import RecommendationCard from './components/RecommendationCard';
@@ -10,6 +10,7 @@ import HowItWorks from './components/HowItWorks';
 import DomainsGrid from './components/DomainsGrid';
 import ResultsHistory, { saveResult } from './components/ResultsHistory';
 import AuthPage from './components/AuthPage';
+import Phi3Chatbot from './components/Phi3Chatbot';
 import { buildAuthHeaders, clearAuth, getStoredAuth, saveAuth } from './utils/auth';
 
 const API  = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
@@ -27,8 +28,21 @@ const STATS = [
 ];
 
 export default function App() {
-  const [view, setView]                       = useState(VIEW.HOME);
-  const [auth, setAuth]                       = useState(() => getStoredAuth());
+  // Theme: load persisted preference, default to 'dark'. Applied as a class on <body>.
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+
+  // Set body class and persist to localStorage on every theme change.
+  useEffect(() => {
+    document.body.className = theme;
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+
+  const storedAuth = getStoredAuth();
+  // Default landing: show AUTH if not logged in, HOME if already authenticated.
+  const [view, setView]                       = useState(storedAuth ? VIEW.HOME : VIEW.AUTH);
+  const [auth, setAuth]                       = useState(() => storedAuth);
   const [isLoading, setIsLoading]             = useState(false);
   const [error, setError]                     = useState(null);
   const [currentSkills, setCurrentSkills]     = useState({});
@@ -128,11 +142,13 @@ export default function App() {
   const handleLogout = () => {
     clearAuth();
     setAuth(null);
-    handleNewSearch();
+    // After logout, redirect back to the login page (AUTH is the default landing)
+    setView(VIEW.AUTH);
   };
 
   return (
-    <div className="relative min-h-screen bg-slate-950 text-slate-100 overflow-x-hidden">
+    // Light mode: swap slate-950 background for a light surface via Tailwind dark: variant
+    <div className="relative min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden transition-colors duration-300">
 
       {/* Background glow blobs */}
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -156,7 +172,23 @@ export default function App() {
         user={user}
         onAuthClick={() => setView(VIEW.AUTH)}
         onLogout={handleLogout}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
+
+      {/* Integration point: AUTH view rendered as a fixed full-screen overlay outside the
+          constrained <main> container so the two-column layout fills the entire viewport,
+          matching the source AuthScreen.jsx design exactly. */}
+      {view === VIEW.AUTH && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <AuthPage
+            onAuthSuccess={handleAuthSuccess}
+            onBack={auth ? () => setView(VIEW.HOME) : undefined}
+            theme={theme}
+            onToggleTheme={toggleTheme}
+          />
+        </div>
+      )}
 
       <main className="relative mx-auto max-w-6xl px-6 py-12 lg:px-8">
 
@@ -166,13 +198,6 @@ export default function App() {
             <span>{error}</span>
             <button onClick={() => setError(null)} className="ml-4 text-rose-400 hover:text-white transition-colors">✕</button>
           </div>
-        )}
-
-        {view === VIEW.AUTH && (
-          <AuthPage
-            onAuthSuccess={handleAuthSuccess}
-            onBack={() => setView(VIEW.HOME)}
-          />
         )}
 
         {/* ── HOME ─────────────────────────────────────────────────────────── */}
@@ -289,6 +314,9 @@ export default function App() {
       <footer className="relative mt-24 border-t border-white/[0.05] py-8 text-center text-xs text-slate-600">
         CareerBloom — AI Career Intelligence · Built with FastAPI + React + Tailwind
       </footer>
+
+      {/* Addition: mount the Phi-3 chatbot globally as a separate feature without altering existing flows. */}
+      <Phi3Chatbot />
     </div>
   );
 }

@@ -62,6 +62,9 @@ const PracticeTab = ({ onBack, currentSkills = {} }) => {
   const [selectedDifficulty, setSelectedDifficulty] = useState('All');
   // Addition: solved-question state persists checkmarks locally without affecting other dashboard features.
   const [solvedQuestions, setSolvedQuestions] = useState(() => loadSolvedQuestions());
+  // Addition: simple visibility toggles keep the new interview sections optional without redesigning the page.
+  const [showHrQuestions, setShowHrQuestions] = useState(true);
+  const [showTechnicalQuestions, setShowTechnicalQuestions] = useState(true);
 
   useEffect(() => {
     // Addition: reset scroll so the new dashboard page opens from the top like the other views.
@@ -83,7 +86,7 @@ const PracticeTab = ({ onBack, currentSkills = {} }) => {
   const visibleQuestions = useMemo(() => {
     if (!selectedCompanyBlock) return [];
 
-    const sortedQuestions = [...selectedCompanyBlock.questions].sort((left, right) => {
+    const sortedQuestions = [...selectedCompanyBlock.codingQuestions].sort((left, right) => {
       const rightScore = getPracticePriorityScore(right.title, currentSkills);
       const leftScore = getPracticePriorityScore(left.title, currentSkills);
       if (rightScore !== leftScore) return rightScore - leftScore;
@@ -104,6 +107,12 @@ const PracticeTab = ({ onBack, currentSkills = {} }) => {
       [title]: !previous[title],
     }));
   };
+
+  // Addition: coding progress stays isolated to coding questions only.
+  const codingSolvedCount = useMemo(() => {
+    if (!selectedCompanyBlock) return 0;
+    return selectedCompanyBlock.codingQuestions.filter((question) => Boolean(solvedQuestions[question.title])).length;
+  }, [selectedCompanyBlock, solvedQuestions]);
 
   return (
     <div className="space-y-8 animate-slide-up">
@@ -165,10 +174,14 @@ const PracticeTab = ({ onBack, currentSkills = {} }) => {
             <p className="section-label">Practice Set</p>
             <h3 className="mt-2 text-2xl font-semibold text-white">{selectedCompanyBlock.company}</h3>
             <p className="mt-1 text-sm text-slate-500">
-              {visibleQuestions.length} question{visibleQuestions.length !== 1 ? 's' : ''} shown
+              {visibleQuestions.length} coding question{visibleQuestions.length !== 1 ? 's' : ''} shown
+            </p>
+            <p className="mt-1 text-sm text-slate-500">
+              Progress: {codingSolvedCount}/{selectedCompanyBlock.codingQuestions.length} coding questions solved
             </p>
           </div>
 
+          {/* Addition: coding question list remains the original primary section and keeps the existing solved logic. */}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {visibleQuestions.map((question) => {
               const isSolved = Boolean(solvedQuestions[question.title]);
@@ -228,6 +241,88 @@ const PracticeTab = ({ onBack, currentSkills = {} }) => {
               <p className="text-sm text-slate-400">No questions found for the selected difficulty.</p>
             </div>
           )}
+
+          {/* Addition: HR interview prompts are rendered separately so they never affect coding progress. */}
+          <div className="mt-8">
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="section-label">Interview Prep</p>
+                <h4 className="mt-2 text-xl font-semibold text-white">HR Interview Questions</h4>
+                <p className="mt-1 text-sm text-slate-500">
+                  {selectedCompanyBlock.hrQuestions.length} common HR and behavioral prompts
+                </p>
+              </div>
+              <button
+                onClick={() => setShowHrQuestions((previous) => !previous)}
+                className="btn-ghost text-xs shrink-0"
+              >
+                {showHrQuestions ? 'Hide' : 'Show'}
+              </button>
+            </div>
+
+            {showHrQuestions && (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {selectedCompanyBlock.hrQuestions.map((question) => (
+                  <div
+                    key={`${selectedCompanyBlock.company}-hr-${question}`}
+                    className="group flex items-start gap-3 rounded-2xl border border-slate-700/60 bg-slate-950/50 p-4
+                               transition-all duration-200 hover:border-indigo-500/40 hover:bg-indigo-500/5"
+                  >
+                    <span className="mt-0.5 text-base shrink-0">•</span>
+                    <div className="min-w-0">
+                      <p className="text-[10px] uppercase tracking-wider text-indigo-400 mb-1">
+                        HR Interview
+                      </p>
+                      <p className="text-sm font-medium text-slate-200 leading-snug group-hover:text-white transition-colors">
+                        {question}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Addition: technical interview prompts sit in their own section below HR, using the same card pattern. */}
+          <div className="mt-8">
+            <div className="mb-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="section-label">Interview Prep</p>
+                <h4 className="mt-2 text-xl font-semibold text-white">Technical Interview Questions</h4>
+                <p className="mt-1 text-sm text-slate-500">
+                  {selectedCompanyBlock.technicalQuestions.length} core CS and engineering prompts
+                </p>
+              </div>
+              <button
+                onClick={() => setShowTechnicalQuestions((previous) => !previous)}
+                className="btn-ghost text-xs shrink-0"
+              >
+                {showTechnicalQuestions ? 'Hide' : 'Show'}
+              </button>
+            </div>
+
+            {showTechnicalQuestions && (
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {selectedCompanyBlock.technicalQuestions.map((question) => (
+                  <div
+                    key={`${selectedCompanyBlock.company}-technical-${question}`}
+                    className="group flex items-start gap-3 rounded-2xl border border-slate-700/60 bg-slate-950/50 p-4
+                               transition-all duration-200 hover:border-indigo-500/40 hover:bg-indigo-500/5"
+                  >
+                    <span className="mt-0.5 text-base shrink-0">•</span>
+                    <div className="min-w-0">
+                      <p className="text-[10px] uppercase tracking-wider text-indigo-400 mb-1">
+                        Technical Interview
+                      </p>
+                      <p className="text-sm font-medium text-slate-200 leading-snug group-hover:text-white transition-colors">
+                        {question}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -6,7 +6,7 @@ const NAV_ITEMS = [
   { label: 'Results',      id: 'results' },
 ];
 
-const Navbar = ({ onLaunch, onNavClick, onPracticeClick, isPracticeActive, user, onAuthClick, onLogout }) => {
+const Navbar = ({ onLaunch, onNavClick, onPracticeClick, isPracticeActive, user, onAuthClick, onLogout, theme, onToggleTheme }) => {
   const [scrolled, setScrolled]   = useState(false);
   const [active, setActive]       = useState('');
   const [menuOpen, setMenuOpen]   = useState(false);
@@ -95,6 +95,25 @@ const Navbar = ({ onLaunch, onNavClick, onPracticeClick, isPracticeActive, user,
 
         {/* Right side */}
         <div className="flex items-center gap-3">
+          {/* Global theme toggle — persisted in localStorage via App.jsx */}
+          <button
+            onClick={onToggleTheme}
+            aria-label="Toggle light/dark mode"
+            className="hidden sm:flex h-8 w-8 items-center justify-center rounded-xl border border-slate-700 dark:border-slate-700 border-slate-300 text-slate-400 dark:text-slate-400 text-slate-600 hover:border-indigo-500/60 hover:text-white dark:hover:text-white hover:text-slate-900 transition-colors"
+          >
+            {theme === 'dark' ? (
+              // Sun icon — shown in dark mode to switch to light
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+              </svg>
+            ) : (
+              // Moon icon — shown in light mode to switch to dark
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+              </svg>
+            )}
+          </button>
+
           {user ? (
             <div className="hidden sm:flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs text-slate-300">
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
@@ -139,7 +158,14 @@ const Navbar = ({ onLaunch, onNavClick, onPracticeClick, isPracticeActive, user,
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden border-t border-white/[0.06] bg-slate-950/95 backdrop-blur-xl px-6 py-4 space-y-1">
+        <div className="md:hidden border-t border-white/[0.06] bg-slate-950/95 dark:bg-slate-950/95 bg-white/95 backdrop-blur-xl px-6 py-4 space-y-1">
+          {/* Mobile theme toggle */}
+          <button
+            onClick={onToggleTheme}
+            className="block w-full text-left rounded-2xl px-4 py-3 text-sm text-slate-400 dark:text-slate-400 hover:text-white dark:hover:text-white hover:bg-white/[0.04] transition-colors"
+          >
+            {theme === 'dark' ? '☀️ Light mode' : '🌙 Dark mode'}
+          </button>
           {/* Addition: mobile Practice entry mirrors the existing mobile nav item pattern. */}
           <button
             onClick={() => {

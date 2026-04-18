@@ -48,6 +48,7 @@ from career_intelligence_service import build_career_pathways
 from report_service import recommendations_to_csv, readiness_to_csv
 from config.domain_manifest import DOMAIN_MANIFEST, LEGACY_DOMAIN_ALIASES
 from services.company_quiz_service import generate_company_questions
+from services.phi3_service import query_phi3, stream_phi3
 from services.resume_parser_service import extract_text_from_upload, extract_skills_from_text, build_resume_summary
 from ml.inference import (
     build_learning_analytics,
@@ -723,6 +724,7 @@ async def chat(req: ChatRequest):
     """
     Streaming endpoint for the AI Career Consultant.
     Returns text/event-stream chunks.
+    Gemini remains the primary chat provider; phi3 is a chat-only fallback.
     """
     weak_str = ", ".join(req.weak_areas) if req.weak_areas else "none identified"
 
@@ -737,14 +739,32 @@ async def chat(req: ChatRequest):
 
     async def event_stream():
         try:
-            async for chunk in llm_service.stream_chat(system_prompt, req.message):
-                # SSE format
-                yield f"data: {json.dumps({'text': chunk})}\n\n"
+            if llm_service._CONFIGURED:
+                async for chunk in llm_service.stream_chat(system_prompt, req.message):
+                    # SSE format for the existing frontend streaming chat.
+                    yield f"data: {json.dumps({'text': chunk})}\n\n"
+            else:
+                # Addition: chat-only phi3 fallback when Gemini is unavailable.
+                for chunk in stream_phi3(req.message, system_prompt):
+                    yield f"data: {json.dumps({'text': chunk})}\n\n"
         except Exception as e:
-            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            # Addition: final safety net so chat still works if Gemini fails at runtime.
+            try:
+                for chunk in stream_phi3(req.message, system_prompt):
+                    yield f"data: {json.dumps({'text': chunk})}\n\n"
+            except Exception:
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@app.post("/api/chat/phi3")
+def phi3_chat(req: dict):
+    # Addition: separate Ollama-backed chatbot endpoint so the Phi-3 feature
+    # stays isolated from the existing consultant chat service.
+    prompt = str(req.get("message", "")).strip()
+    return {"response": query_phi3(prompt)}
 
 
 # ── POST /recommend-career ────────────────────────────────────────────────────

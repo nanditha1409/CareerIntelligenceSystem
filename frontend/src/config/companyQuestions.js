@@ -456,10 +456,225 @@ const buildQuestionList = (titles) => {
     .filter((question) => question.link);
 };
 
-// Addition: exported structure matches the Practice tab contract consumed by the new component.
+// Addition: shared HR interview prompts keep the new sections realistic and concise.
+const BASE_HR_QUESTIONS = [
+  'Tell me about yourself.',
+  'Why do you want to join this company?',
+  'Why are you interested in this role?',
+  'What are your biggest strengths?',
+  'What is one weakness you are working on?',
+  'Describe a difficult challenge you handled.',
+  'Tell me about a time you worked in a team.',
+  'Describe a conflict you resolved at work or college.',
+  'How do you handle pressure and deadlines?',
+  'Tell me about a time you failed and what you learned.',
+  'How do you prioritize your tasks?',
+  'Describe a situation where you showed leadership.',
+  'How do you handle feedback?',
+  'Tell me about a time you learned something quickly.',
+  'Why should we hire you?',
+  'Where do you see yourself in five years?',
+  'What motivates you at work?',
+  'How do you adapt to change?',
+  'Describe a time you took ownership of a problem.',
+  'What kind of work environment helps you do your best?',
+];
+
+// Addition: company-specific HR prompts keep each company block distinct without changing the UI.
+const COMPANY_HR_QUESTIONS = {
+  Google: [
+    'Why Google and not another big tech company?',
+    'How do Google products influence your daily life?',
+    'Tell me about a time you solved an ambiguous problem.',
+    'How would you contribute to a high-impact Google team?',
+    'What does innovation mean to you?',
+  ],
+  Amazon: [
+    'Which Amazon leadership principle fits you best?',
+    'Tell me about a time you disagreed and committed.',
+    'Describe a situation where you earned customer trust.',
+    'How have you shown ownership in a project?',
+    'Tell me about a time you delivered results under pressure.',
+  ],
+  Microsoft: [
+    'Why do you want to work at Microsoft?',
+    'How do you build collaborative relationships in a team?',
+    'Tell me about a time you supported someone else’s success.',
+    'Describe a situation where you had to learn from feedback quickly.',
+    'How would you contribute to Microsoft’s mission?',
+  ],
+  Meta: [
+    'Why are you interested in Meta?',
+    'Tell me about a fast-moving project you handled well.',
+    'How do you balance speed and quality?',
+    'Describe a time you used data to influence a decision.',
+    'What excites you about building products at scale?',
+  ],
+  Apple: [
+    'Why Apple?',
+    'Tell me about a time you paid attention to detail.',
+    'How do you balance craftsmanship and deadlines?',
+    'Describe a project you improved through iteration.',
+    'What does customer experience mean to you?',
+  ],
+  Netflix: [
+    'Why Netflix?',
+    'Tell me about a time you made a hard decision with limited guidance.',
+    'How do you stay accountable in a high-performance environment?',
+    'Describe a time you raised the quality bar.',
+    'What does freedom with responsibility mean to you?',
+  ],
+  TCS: [
+    'Why do you want to join TCS?',
+    'How would you handle working with global clients?',
+    'Tell me about a time you adapted to a process quickly.',
+    'Describe a project where reliability mattered most.',
+    'How do you maintain professionalism in client-facing work?',
+  ],
+  Infosys: [
+    'Why Infosys?',
+    'How would you handle a demanding client requirement?',
+    'Tell me about a time you learned a new tool quickly.',
+    'Describe a situation where process discipline helped you.',
+    'What interests you about working in enterprise delivery?',
+  ],
+  Wipro: [
+    'Why Wipro?',
+    'How do you stay calm when supporting critical systems?',
+    'Tell me about a time you improved operational efficiency.',
+    'Describe a situation where you followed strict timelines.',
+    'How would you handle frequent requirement changes?',
+  ],
+  Accenture: [
+    'Why Accenture?',
+    'How do you approach solving client business problems?',
+    'Tell me about a time you communicated a technical idea clearly.',
+    'Describe a project where teamwork was essential.',
+    'How do you manage multiple stakeholders?',
+  ],
+};
+
+// Addition: technical fundamentals stay short, commonly asked, and company-agnostic where appropriate.
+const BASE_TECHNICAL_QUESTIONS = [
+  'What is the time complexity of binary search?',
+  'What is a hash map?',
+  'What is the difference between stack and queue?',
+  'What is the difference between array and linked list?',
+  'What is recursion?',
+  'What is dynamic programming?',
+  'What is the difference between DFS and BFS?',
+  'What is a binary search tree?',
+  'What is normalization in DBMS?',
+  'What is the difference between SQL and NoSQL?',
+  'What is indexing in databases?',
+  'What are the four pillars of OOP?',
+  'What is polymorphism?',
+  'What is the difference between process and thread?',
+  'What is deadlock in operating systems?',
+  'What is a race condition?',
+  'What is caching?',
+  'What is load balancing?',
+  'What is an API?',
+  'What is the difference between REST and GraphQL?',
+];
+
+// Addition: small company-specific technical prompts provide realistic flavor without affecting coding questions.
+const COMPANY_TECHNICAL_QUESTIONS = {
+  Google: [
+    'How would you analyze the complexity of a search algorithm?',
+    'What is the difference between heap and balanced tree?',
+    'How would you design autocomplete at a high level?',
+    'What is memoization and when would you use it?',
+    'How do you detect cycles in a graph?',
+  ],
+  Amazon: [
+    'How would you design a URL shortener at a high level?',
+    'What is eventual consistency?',
+    'How would you handle duplicate messages in a distributed system?',
+    'What is the difference between horizontal and vertical scaling?',
+    'How would you design an inventory service?',
+  ],
+  Microsoft: [
+    'How would you explain virtual memory?',
+    'What is the difference between interface and abstract class?',
+    'How would you design a collaborative editor at a high level?',
+    'What is a semaphore?',
+    'How do you optimize a slow SQL query?',
+  ],
+  Meta: [
+    'How would you design a news feed at a high level?',
+    'What is sharding?',
+    'How would you detect duplicate content efficiently?',
+    'What is the tradeoff between latency and throughput?',
+    'How would you design a real-time notification system?',
+  ],
+  Apple: [
+    'How would you optimize an app for low memory usage?',
+    'What is the difference between mutable and immutable objects?',
+    'How would you design a simple sync service?',
+    'What is an observer pattern?',
+    'Why is thread safety important in client applications?',
+  ],
+  Netflix: [
+    'How would you design a video streaming service at a high level?',
+    'What is CDN caching?',
+    'How do you improve resiliency in distributed systems?',
+    'What is circuit breaking?',
+    'How would you monitor service reliability?',
+  ],
+  TCS: [
+    'What is ACID in databases?',
+    'What is SDLC?',
+    'How do you handle null pointer exceptions in code?',
+    'What is exception handling?',
+    'How would you explain client-server architecture?',
+  ],
+  Infosys: [
+    'What is a primary key and foreign key?',
+    'What is multithreading?',
+    'How would you explain object-oriented design?',
+    'What is the purpose of version control?',
+    'How do you test an API?',
+  ],
+  Wipro: [
+    'What is the difference between HTTP and HTTPS?',
+    'What is a cron job?',
+    'How would you debug a production issue?',
+    'What is the purpose of logging?',
+    'How do you monitor application health?',
+  ],
+  Accenture: [
+    'How would you explain system design to a non-technical stakeholder?',
+    'What is a microservice?',
+    'What is message queuing?',
+    'How do you secure an API?',
+    'What is the difference between synchronous and asynchronous communication?',
+  ],
+};
+
+// Addition: helper keeps HR/technical question text unique within each company list.
+const buildTextQuestionList = (questions) => {
+  const seen = new Set();
+  return questions.filter((question) => {
+    const normalized = question.trim();
+    if (!normalized || seen.has(normalized)) return false;
+    seen.add(normalized);
+    return true;
+  });
+};
+
+// Addition: exported structure now cleanly separates coding, HR, and technical interview preparation.
 const companyQuestions = Object.entries(COMPANY_QUESTION_TITLES).map(([company, titles]) => ({
   company,
-  questions: buildQuestionList(titles),
+  codingQuestions: buildQuestionList(titles),
+  hrQuestions: buildTextQuestionList([
+    ...BASE_HR_QUESTIONS,
+    ...(COMPANY_HR_QUESTIONS[company] || []),
+  ]),
+  technicalQuestions: buildTextQuestionList([
+    ...BASE_TECHNICAL_QUESTIONS,
+    ...(COMPANY_TECHNICAL_QUESTIONS[company] || []),
+  ]),
 }));
 
 export default companyQuestions;

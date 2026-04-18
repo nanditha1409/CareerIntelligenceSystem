@@ -106,7 +106,12 @@ const TestSection = ({ domain, skills = {}, onComplete, onBack, token, user }) =
         return res.json();
       })
       .then((data) => {
-        const qs = data.questions || [];
+        // Addition: attach a unique client-side ID so answer state stays isolated
+        // even if upstream question IDs are duplicated or reused.
+        const qs = (data.questions || []).map((question, index) => ({
+          ...question,
+          _clientId: `${domain}-${question.id || 'question'}-${index}`,
+        }));
         if (qs.length === 0) throw new Error('Server returned 0 questions for this domain.');
         setQuestions(qs);
         setIsLLM(data.source === 'llm');
@@ -133,7 +138,7 @@ const TestSection = ({ domain, skills = {}, onComplete, onBack, token, user }) =
 
     const answersPayload = questions.map((q) => ({
       id:     q.id,
-      answer: answers[q.id] ?? -1,
+      answer: answers[q._clientId] ?? -1,
     }));
 
     try {
@@ -159,7 +164,7 @@ const TestSection = ({ domain, skills = {}, onComplete, onBack, token, user }) =
     }
   };
 
-  const answered    = questions.filter((q) => answers[q.id] !== undefined).length;
+  const answered    = questions.filter((q) => answers[q._clientId] !== undefined).length;
   const total       = questions.length;
   const allAnswered = total > 0 && answered === total;
   const progress    = total ? Math.round((answered / total) * 100) : 0;
@@ -232,10 +237,10 @@ const TestSection = ({ domain, skills = {}, onComplete, onBack, token, user }) =
 
           <div className="space-y-5">
             {questions.map((q, index) => {
-              const isAnswered = answers[q.id] !== undefined;
+              const isAnswered = answers[q._clientId] !== undefined;
               return (
                 <div
-                  key={q.id}
+                  key={q._clientId}
                   className={`rounded-3xl border p-6 transition-all duration-200 ${
                     isAnswered
                       ? 'border-indigo-500/30 bg-indigo-950/30'
@@ -261,9 +266,9 @@ const TestSection = ({ domain, skills = {}, onComplete, onBack, token, user }) =
                     {(q.options || []).map((opt, i) => (
                       <button
                         key={i}
-                        onClick={() => handleAnswer(q.id, i)}
+                        onClick={() => handleAnswer(q._clientId, i)}
                         className={`rounded-2xl border px-4 py-3 text-left text-sm transition-all duration-150 ${
-                          answers[q.id] === i
+                          answers[q._clientId] === i
                             ? 'border-indigo-500 bg-indigo-500/15 text-white font-medium'
                             : 'border-slate-700/60 bg-slate-950/50 text-slate-400 hover:border-indigo-500/40 hover:text-slate-200'
                         }`}
