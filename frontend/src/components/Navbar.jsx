@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-const Navbar = ({ onLaunch, currentUser, onLogout, onDashboard }) => {
+const Navbar = ({ onLaunch, currentUser, onLogout, onDashboard, onCompanyPractice, theme, onToggleTheme }) => {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -39,12 +39,20 @@ const Navbar = ({ onLaunch, currentUser, onLogout, onDashboard }) => {
           <button onClick={onLaunch} className="transition-colors duration-150 hover:text-white">
             New analysis
           </button>
-          <button className="transition-colors duration-150 hover:text-white">
-            Results
+          <button onClick={onCompanyPractice} className="transition-colors duration-150 hover:text-white">
+            Company Practice
           </button>
         </nav>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={onToggleTheme}
+            className="btn-ghost text-xs px-4 py-2"
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
+            {theme === 'dark' ? 'Light' : 'Dark'} mode
+          </button>
+
           {currentUser && (
             <div className="hidden rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-right md:block">
               <p className="text-xs font-semibold text-white">{currentUser.name}</p>

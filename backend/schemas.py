@@ -77,6 +77,16 @@ class JourneyAssessmentItem(BaseModel):
     created_at: str
 
 
+class CompanyPerformanceItem(BaseModel):
+    company: str
+    level: str
+    attempts: int
+    best_score: float
+    average_score: float
+    latest_score: float
+    latest_attempt_at: str
+
+
 class RoadmapStep(BaseModel):
     week: int
     title: str
@@ -100,6 +110,7 @@ class JourneyDashboardResponse(BaseModel):
     overview: JourneyOverview
     recommendation_history: List[JourneySessionItem]
     assessment_history: List[JourneyAssessmentItem]
+    company_performance: List[CompanyPerformanceItem]
     roadmap: Optional[LearningRoadmap] = None
 
 
@@ -125,17 +136,74 @@ class TestSubmission(BaseModel):
     user_id: Optional[str] = None
 
 
+class CompanyPracticeSubmission(BaseModel):
+    company: str
+    role: str = "General"
+    level: str = "mixed"
+    answers: List[Any]
+    user_id: Optional[str] = None
+
+
+class CompanyPracticeQuestion(BaseModel):
+    id: str
+    question: str
+    text: str
+    options: List[str]
+    company: str
+    role: str
+    difficulty: str
+    topic_tag: str
+    question_type: str
+
+
+class CompanyPracticeEvaluateResponse(BaseModel):
+    company: str
+    role: str
+    level: str
+    score: int
+    correct_count: int
+    total_questions: int
+    feedback: str
+    difficulty_breakdown: dict
+
+
+class DemandItem(BaseModel):
+    level: str
+    percentage: int
+
+
 class RecommendationItem(BaseModel):
-    domain: str
+    role: str
     confidence: float
     salary: str
-    demand: str
+    demand: DemandItem
     reason: List[str]
     top_skills: List[str]  # XAI: top contributing skills
     fit_summary: str
     growth_summary: str
     missing_priority_skills: List[str]
     project_suggestions: List[str]
+
+
+class GitHubProjectCreate(BaseModel):
+    user_id: str
+    repo_name: str
+    repo_url: str
+
+    @field_validator("repo_url")
+    @classmethod
+    def validate_url(cls, v):
+        if "github.com" not in v.lower():
+            raise ValueError("URL must be a valid GitHub link.")
+        return v
+
+
+class GitHubProjectResponse(BaseModel):
+    id: int
+    user_id: str
+    repo_name: str
+    repo_url: str
+    created_at: str
 
 
 class SkillGapItem(BaseModel):
@@ -175,6 +243,7 @@ class RecommendResponse(BaseModel):
 class EvaluateResponse(BaseModel):
     quiz_score: int                 # raw % correct/total
     correct_count: int              # number of correct answers (e.g. 8 out of 10)
+    total_questions: int
     score: int                      # alias kept for backward compat
     feedback: str
     weak_sub_topics: List[WeakSubTopic]   # sub-topics where >40% wrong

@@ -2,6 +2,19 @@ import React, { useState, useEffect } from 'react';
 
 const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
+const LEVELS = [
+  { value: 'mixed', label: 'Mixed', helper: '5 easy, 3 medium, 2 hard' },
+  { value: 'easy', label: 'Easy', helper: '10 basic MCQs' },
+  { value: 'medium', label: 'Medium', helper: 'Includes 2 easy coding prompts' },
+  { value: 'hard', label: 'Hard', helper: 'Includes 3 medium coding prompts' },
+];
+
+const LEVEL_STYLE = {
+  easy: 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300',
+  medium: 'border-amber-500/25 bg-amber-500/10 text-amber-300',
+  hard: 'border-rose-500/25 bg-rose-500/10 text-rose-300',
+};
+
 // ── Spinner ───────────────────────────────────────────────────────────────────
 const Spinner = () => (
   <svg className="h-8 w-8 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24">
@@ -18,6 +31,8 @@ const TestSection = ({ domain, skills = [], currentUser, onComplete, onBack }) =
   const [fetchError, setFetchError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [level, setLevel] = useState('mixed');
+  const [levelMix, setLevelMix] = useState({});
 
   // ── Fetch questions ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -27,7 +42,12 @@ const TestSection = ({ domain, skills = [], currentUser, onComplete, onBack }) =
     setAnswers({});
 
     // Try new path first, fall back to legacy
-    fetch(`${API}/questions/${encodeURIComponent(domain)}`)
+    const params = new URLSearchParams({
+      level,
+      user_id: currentUser?.user_id || 'guest',
+    });
+
+    fetch(`${API}/questions/${encodeURIComponent(domain)}?${params.toString()}`)
       .then(async (res) => {
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
@@ -39,14 +59,18 @@ const TestSection = ({ domain, skills = [], currentUser, onComplete, onBack }) =
         const qs = data.questions || [];
         if (qs.length === 0) throw new Error('Server returned 0 questions for this domain.');
         setQuestions(qs);
+        setLevelMix(data.level_mix || {});
       })
       .catch((err) => setFetchError(err.message))
       .finally(() => setLoading(false));
-  }, [domain]);
+  }, [domain, level, currentUser?.user_id]);
 
   // ── Answer selection ────────────────────────────────────────────────────────
   const handleAnswer = (questionId, optionIndex) =>
     setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
+
+  const handleCodeAnswer = (questionId, code) =>
+    setAnswers((prev) => ({ ...prev, [questionId]: code }));
 
   // ── Submit ──────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
@@ -86,7 +110,11 @@ const TestSection = ({ domain, skills = [], currentUser, onComplete, onBack }) =
   };
 
   // ── Derived state ───────────────────────────────────────────────────────────
-  const answered   = questions.filter((q) => answers[q.id] !== undefined).length;
+  const answered   = questions.filter((q) => {
+    const answer = answers[q.id];
+    if (q.question_type === 'coding') return typeof answer === 'string' && answer.trim().length > 0;
+    return answer !== undefined;
+  }).length;
   const total      = questions.length;
   const allAnswered = total > 0 && answered === total;
   const progress   = total ? Math.round((answered / total) * 100) : 0;
@@ -105,11 +133,28 @@ const TestSection = ({ domain, skills = [], currentUser, onComplete, onBack }) =
             </h2>
             <p className="mt-1.5 text-sm text-slate-400">
               {total > 0
-                ? `Answer all ${total} questions to reveal your readiness score.`
+                ? `Answer all ${total} ${level} level questions to reveal your readiness score.`
                 : 'Loading questions…'}
             </p>
           </div>
           <button onClick={onBack} className="btn-ghost text-xs shrink-0">← Back</button>
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-4">
+          {LEVELS.map((item) => (
+            <button
+              key={item.value}
+              onClick={() => setLevel(item.value)}
+              className={`rounded-2xl border px-4 py-3 text-left transition-all duration-200 ${
+                level === item.value
+                  ? 'border-indigo-500 bg-indigo-500/15 text-white shadow-glow-sm'
+                  : 'border-slate-700/60 bg-slate-950/50 text-slate-400 hover:border-indigo-500/40 hover:text-slate-200'
+              }`}
+            >
+              <span className="block text-sm font-semibold">{item.label}</span>
+              <span className="mt-1 block text-xs opacity-75">{item.helper}</span>
+            </button>
+          ))}
         </div>
       </div>
 
@@ -141,7 +186,10 @@ const TestSection = ({ domain, skills = [], currentUser, onComplete, onBack }) =
           {/* Question cards */}
           <div className="space-y-5">
             {questions.map((q, index) => {
-              const isAnswered = Boolean(answers[q.id]);
+              const isCoding = q.question_type === 'coding';
+              const isAnswered = isCoding
+                ? typeof answers[q.id] === 'string' && answers[q.id].trim().length > 0
+                : answers[q.id] !== undefined;
               return (
                 <div
                   key={q.id}
@@ -161,26 +209,56 @@ const TestSection = ({ domain, skills = [], currentUser, onComplete, onBack }) =
                       <span className="inline-block rounded-full bg-slate-800 px-2.5 py-0.5 text-[10px] font-medium text-slate-400 mb-2">
                         {q.topic_tag || q.sub_topic}
                       </span>
+                      <span className={`ml-2 inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${LEVEL_STYLE[q.difficulty] || LEVEL_STYLE.easy}`}>
+                        {q.difficulty || 'easy'}
+                      </span>
+                      {q.question_type && (
+                        <span className="ml-2 inline-block rounded-full border border-slate-700/60 bg-slate-950/50 px-2.5 py-0.5 text-[10px] font-medium text-slate-500">
+                          {q.question_type}
+                        </span>
+                      )}
                       <h3 className="text-sm font-semibold text-white leading-snug">{q.question}</h3>
                     </div>
                   </div>
 
-                  {/* Options */}
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {(q.options || []).map((opt, i) => (
-                      <button
-                        key={i}
-                        onClick={() => handleAnswer(q.id, i)}
-                        className={`rounded-2xl border px-4 py-3 text-left text-sm transition-all duration-150 ${
-                          answers[q.id] === i
-                            ? 'border-indigo-500 bg-indigo-500/15 text-white font-medium'
-                            : 'border-slate-700/60 bg-slate-950/50 text-slate-400 hover:border-indigo-500/40 hover:text-slate-200'
-                        }`}
-                      >
-                        {opt}
-                      </button>
-                    ))}
-                  </div>
+                  {isCoding ? (
+                    <div className="space-y-3">
+                      {q.starter_code && (
+                        <div className="rounded-2xl border border-slate-700/60 bg-slate-950/70 p-4">
+                          <p className="mb-2 text-[10px] uppercase tracking-wider text-slate-500">Starter code</p>
+                          <pre className="overflow-x-auto whitespace-pre-wrap text-xs leading-relaxed text-slate-300">
+                            <code>{q.starter_code}</code>
+                          </pre>
+                        </div>
+                      )}
+                      <textarea
+                        value={answers[q.id] ?? q.starter_code ?? ''}
+                        onChange={(event) => handleCodeAnswer(q.id, event.target.value)}
+                        spellCheck="false"
+                        className="min-h-[220px] w-full rounded-2xl border border-slate-700/70 bg-slate-950/70 px-4 py-3 font-mono text-sm leading-relaxed text-slate-100 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                        placeholder="Write your code or pseudocode here..."
+                      />
+                      <p className="text-xs text-slate-500">
+                        Coding answers are reviewed with lightweight keyword-based scoring for now, so include clear logic and important function/operation names.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {(q.options || []).map((opt, i) => (
+                        <button
+                          key={i}
+                          onClick={() => handleAnswer(q.id, i)}
+                          className={`rounded-2xl border px-4 py-3 text-left text-sm transition-all duration-150 ${
+                            answers[q.id] === i
+                              ? 'border-indigo-500 bg-indigo-500/15 text-white font-medium'
+                              : 'border-slate-700/60 bg-slate-950/50 text-slate-400 hover:border-indigo-500/40 hover:text-slate-200'
+                          }`}
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -207,6 +285,20 @@ const TestSection = ({ domain, skills = [], currentUser, onComplete, onBack }) =
                     : `${total - answered} question${total - answered !== 1 ? 's' : ''} remaining`}
                 </p>
               </div>
+
+              {Object.keys(levelMix).length > 0 && (
+                <div className="rounded-2xl border border-slate-700/60 bg-slate-950/50 p-4">
+                  <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-3">Question mix</p>
+                  <div className="space-y-2">
+                    {Object.entries(levelMix).map(([difficulty, count]) => (
+                      <div key={difficulty} className="flex items-center justify-between text-xs">
+                        <span className="capitalize text-slate-400">{difficulty}</span>
+                        <span className="font-semibold text-slate-200">{count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Submit error */}
               {submitError && (

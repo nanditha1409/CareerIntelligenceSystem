@@ -51,6 +51,30 @@ class TestResult(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
+class CompanyPracticeResult(Base):
+    __tablename__ = "company_practice_results"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, index=True, nullable=True)
+    company = Column(String, index=True)
+    role = Column(String)
+    level = Column(String, index=True)
+    score = Column(Float)                  # 0-100
+    correct_count = Column(Integer)
+    total_questions = Column(Integer)
+    difficulty_breakdown = Column(Text)    # JSON string
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class GitHubProject(Base):
+    __tablename__ = "github_projects"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, index=True, nullable=False)
+    repo_name = Column(String, nullable=False)
+    repo_url = Column(String, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
 def init_db():
     Base.metadata.create_all(bind=engine)
 

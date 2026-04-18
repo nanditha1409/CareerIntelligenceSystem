@@ -1,21 +1,29 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Navbar from './components/Navbar';
-import SkillInput from './components/SkillInput';
+import ExperienceProfile from './components/ExperienceProfile';
 import RecommendationCard from './components/RecommendationCard';
 import TestSection from './components/TestSection';
 import ResultDashboard from './components/ResultDashboard';
 import SkillGapPanel from './components/SkillGapPanel';
-import XAIPanel from './components/XAIPanel';
 import AuthScreen from './components/AuthScreen';
 import JourneyDashboard from './components/JourneyDashboard';
+import CompanyPractice from './components/CompanyPractice';
 
 const API = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const AUTH_STORAGE_KEY = 'career-bloom-user';
-const VIEW = { DASHBOARD: 'dashboard', HOME: 'home', RECS: 'recs', TEST: 'test', RESULTS: 'results' };
+const THEME_STORAGE_KEY = 'career-bloom-theme';
+const VIEW = {
+  DASHBOARD: 'dashboard',
+  HOME: 'home',
+  RECS: 'recs',
+  TEST: 'test',
+  RESULTS: 'results',
+  COMPANY: 'company',
+};
 
 const STATS = [
   { value: '9+', label: 'Career domains' },
-  { value: '32', label: 'Skills tracked' },
+  { value: '35', label: 'Skills tracked' },
   { value: '91%', label: 'Model accuracy' },
   { value: '540', label: 'Training samples' },
 ];
@@ -31,6 +39,13 @@ const loadStoredUser = () => {
   }
 };
 
+const loadStoredTheme = () => {
+  if (typeof window === 'undefined') return 'dark';
+
+  const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+  return stored === 'light' ? 'light' : 'dark';
+};
+
 export default function App() {
   const [view, setView] = useState(VIEW.DASHBOARD);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,6 +59,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(loadStoredUser);
   const [dashboardData, setDashboardData] = useState(null);
   const [dashboardLoading, setDashboardLoading] = useState(false);
+  const [theme, setTheme] = useState(loadStoredTheme);
   const inputRef = useRef(null);
 
   const personalizedGreeting = useMemo(() => {
@@ -55,6 +71,14 @@ export default function App() {
     setCurrentUser(user);
     window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
     setView(VIEW.DASHBOARD);
+  };
+
+  const toggleTheme = () => {
+    setTheme((current) => {
+      const nextTheme = current === 'dark' ? 'light' : 'dark';
+      window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+      return nextTheme;
+    });
   };
 
   const handleLogout = () => {
@@ -89,12 +113,44 @@ export default function App() {
     }
   };
 
+  const clearRecommendationHistory = async () => {
+    if (!currentUser?.user_id) return;
+    setError(null);
+    try {
+      const res = await fetch(`${API}/users/${currentUser.user_id}/history/recommendations`, {
+        method: 'DELETE',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || 'Failed to clear recommendation history');
+      await loadDashboard(currentUser.user_id);
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  const clearAssessmentHistory = async () => {
+    if (!currentUser?.user_id) return;
+    setError(null);
+    try {
+      const res = await fetch(`${API}/users/${currentUser.user_id}/history/assessments`, {
+        method: 'DELETE',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || 'Failed to clear assessment history');
+      await loadDashboard(currentUser.user_id);
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
   useEffect(() => {
     if (!currentUser?.user_id) return;
     loadDashboard(currentUser.user_id);
   }, [currentUser?.user_id]);
 
-  const handleAnalyze = async (skillArray) => {
+  const handleAnalyze = async (exp, githubProjects) => {
+    const skillArray = exp.skillsUsed;
+    
     setError(null);
     setIsLoading(true);
     try {
@@ -146,11 +202,11 @@ export default function App() {
   };
 
   if (!currentUser) {
-    return <AuthScreen onAuthSuccess={persistUser} />;
+    return <AuthScreen onAuthSuccess={persistUser} theme={theme} onToggleTheme={toggleTheme} />;
   }
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-slate-950 text-slate-100">
+    <div className={`theme-${theme} relative min-h-screen overflow-x-hidden bg-slate-950 text-slate-100 transition-colors duration-300`}>
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-40 left-1/2 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-indigo-600/10 blur-[120px]" />
         <div className="absolute top-1/3 -right-40 h-[400px] w-[600px] rounded-full bg-violet-600/8 blur-[100px]" />
@@ -162,6 +218,9 @@ export default function App() {
         currentUser={currentUser}
         onLogout={handleLogout}
         onDashboard={() => setView(VIEW.DASHBOARD)}
+        onCompanyPractice={() => setView(VIEW.COMPANY)}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       <main className="relative mx-auto max-w-6xl px-6 py-12 lg:px-8">
@@ -181,6 +240,9 @@ export default function App() {
               setView(VIEW.HOME);
               setTimeout(() => inputRef.current?.focus(), 100);
             }}
+            onStartCompanyPractice={() => setView(VIEW.COMPANY)}
+            onClearRecommendationHistory={clearRecommendationHistory}
+            onClearAssessmentHistory={clearAssessmentHistory}
           />
         )}
 
@@ -203,7 +265,7 @@ export default function App() {
             </div>
 
             <div ref={inputRef}>
-              <SkillInput onAnalyze={handleAnalyze} isLoading={isLoading} />
+              <ExperienceProfile onAnalyze={handleAnalyze} isLoading={isLoading} currentUser={currentUser} />
             </div>
 
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 animate-slide-up animation-delay-300">
@@ -244,6 +306,14 @@ export default function App() {
           </div>
         )}
 
+        {view === VIEW.COMPANY && (
+          <CompanyPractice
+            currentUser={currentUser}
+            onBack={() => setView(VIEW.DASHBOARD)}
+            onAttemptSaved={() => loadDashboard(currentUser.user_id)}
+          />
+        )}
+
         {view === VIEW.RECS && (
           <div className="space-y-10">
             <div className="flex items-center justify-between animate-fade-in">
@@ -263,7 +333,6 @@ export default function App() {
               ))}
             </div>
 
-            <XAIPanel recommendations={recommendations} />
             <SkillGapPanel skillGap={skillGap} resources={resources} />
           </div>
         )}

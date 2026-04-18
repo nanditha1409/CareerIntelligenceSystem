@@ -1,43 +1,33 @@
 """
-Generates a synthetic training dataset with 30+ binary skill features.
+Generates a synthetic training dataset with binary skill features (aligned with utils.SKILLS_LIST).
 Run: python generate_dataset.py
 """
 import random
 import pandas as pd
 import os
 
-# ── 30 canonical skills ──────────────────────────────────────────────────────
-SKILLS = [
-    "python", "sql", "ml", "html", "css", "js",
-    "docker", "linux", "figma", "react", "node",
-    "java", "dsa", "aws", "excel", "powerbi",
-    "tensorflow", "networking", "security",
-    "git", "typescript", "mongodb", "redis",
-    "kubernetes", "graphql", "rust", "go",
-    "spark", "tableau", "pytorch",
-    "fastapi", "django",
-]
+from utils import SKILLS_LIST as SKILLS
 
 # ── Domain → core skills (high probability) + secondary (medium probability) ─
 DOMAIN_PROFILES = {
     "Data Scientist":        {"core": ["python", "ml", "sql", "tensorflow", "pytorch", "spark"],
-                              "secondary": ["git", "tableau", "excel"]},
+                              "secondary": ["git", "tableau", "excel", "c", "cpp"]},
     "AI-ML Engineer":        {"core": ["python", "ml", "tensorflow", "pytorch", "fastapi"],
-                              "secondary": ["docker", "git", "aws", "kubernetes"]},
+                              "secondary": ["docker", "git", "aws", "kubernetes", "c", "cpp"]},
     "Data Analyst":          {"core": ["sql", "excel", "powerbi", "tableau", "python"],
-                              "secondary": ["git", "spark"]},
+                              "secondary": ["git", "spark", "ruby"]},
     "Full Stack Developer":  {"core": ["html", "css", "js", "react", "node", "typescript"],
-                              "secondary": ["mongodb", "graphql", "git", "docker"]},
-    "Software Engineer":     {"core": ["python", "java", "dsa", "git"],
-                              "secondary": ["html", "css", "js", "rust", "go"]},
+                              "secondary": ["mongodb", "graphql", "git", "docker", "ruby"]},
+    "Software Engineer":     {"core": ["python", "java", "c", "cpp", "dsa", "git"],
+                              "secondary": ["html", "css", "js", "rust", "go", "ruby"]},
     "DevOps Engineer":       {"core": ["docker", "linux", "aws", "kubernetes", "git"],
-                              "secondary": ["python", "redis", "go"]},
+                              "secondary": ["python", "redis", "go", "c"]},
     "Cybersecurity Analyst": {"core": ["networking", "security", "linux"],
-                              "secondary": ["python", "git"]},
+                              "secondary": ["python", "git", "c", "cpp"]},
     "UI/UX Designer":        {"core": ["figma", "html", "css"],
-                              "secondary": ["js", "react", "typescript"]},
+                              "secondary": ["js", "react", "typescript", "ruby"]},
     "Backend Developer":     {"core": ["python", "node", "sql", "fastapi", "django"],
-                              "secondary": ["docker", "redis", "mongodb", "git"]},
+                              "secondary": ["docker", "redis", "mongodb", "git", "ruby", "cpp"]},
 }
 
 SAMPLES_PER_DOMAIN = 60   # 60 × 9 = 540 rows — enough for a solid RF model
@@ -71,6 +61,7 @@ for domain, profile in DOMAIN_PROFILES.items():
         data.append(row)
 
 df = pd.DataFrame(data)
+df = df[SKILLS + ["domain"]]
 
 OUT_PATH = os.path.join(os.path.dirname(__file__), "data", "dataset.csv")
 os.makedirs(os.path.dirname(OUT_PATH), exist_ok=True)

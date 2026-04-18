@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import normalizeSkillList from '../utils/skillNormalize';
 
 const SUGGESTIONS = ['python', 'react', 'sql', 'docker', 'ml', 'typescript', 'aws', 'figma', 'node', 'kubernetes'];
 
@@ -9,7 +10,8 @@ const SkillInput = ({ onAnalyze, isLoading }) => {
   const inputRef = useRef(null);
 
   const addTag = (skill) => {
-    const s = skill.trim().toLowerCase();
+    const normalized = normalizeSkillList([skill]);
+    const s = normalized[0];
     if (s && !tags.includes(s)) setTags((prev) => [...prev, s]);
     setInput('');
     inputRef.current?.focus();
@@ -28,10 +30,11 @@ const SkillInput = ({ onAnalyze, isLoading }) => {
   };
 
   const handleSubmit = () => {
-    const all = input.trim()
+    const raw = input.trim()
       ? [...tags, ...input.split(',').map((s) => s.trim()).filter(Boolean)]
       : tags;
-    if (all.length) onAnalyze(all);
+    const normalized = normalizeSkillList(raw);
+    if (normalized.length) onAnalyze(normalized);
   };
 
   const unusedSuggestions = SUGGESTIONS.filter((s) => !tags.includes(s));

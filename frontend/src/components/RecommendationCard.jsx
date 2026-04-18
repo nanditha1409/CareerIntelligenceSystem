@@ -1,15 +1,17 @@
 import React from 'react';
 
 const DEMAND_COLOR = {
-  'Very High': 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
-  'High':      'text-sky-400    bg-sky-400/10    border-sky-400/20',
+  'High':      'text-emerald-400 bg-emerald-400/10 border-emerald-400/20',
   'Medium':    'text-amber-400  bg-amber-400/10  border-amber-400/20',
+  'Low':       'text-rose-400 bg-rose-400/10 border-rose-400/20',
 };
 
 const RANK_LABEL = ['#1 Match', '#2 Match', '#3 Match'];
 
 const RecommendationCard = ({ recommendation, onTakeTest, rank = 0 }) => {
-  const demandClass = DEMAND_COLOR[recommendation.demand] || DEMAND_COLOR['Medium'];
+  const demandLevel = recommendation.demand?.level || 'Medium';
+  const demandPct = recommendation.demand?.percentage || 0;
+  const demandClass = DEMAND_COLOR[demandLevel] || DEMAND_COLOR['Medium'];
   const isTop = rank === 0;
 
   return (
@@ -31,11 +33,8 @@ const RecommendationCard = ({ recommendation, onTakeTest, rank = 0 }) => {
         <div className="flex items-start justify-between gap-3">
           <div>
             <span className="section-label">{RANK_LABEL[rank] || `#${rank + 1} Match`}</span>
-            <h3 className="mt-1.5 text-lg font-semibold text-white leading-snug">{recommendation.domain}</h3>
+            <h3 className="mt-1.5 text-lg font-semibold text-white leading-snug">{recommendation.role}</h3>
           </div>
-          <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider ${demandClass}`}>
-            {recommendation.demand}
-          </span>
         </div>
 
         {/* Confidence bar */}
@@ -53,14 +52,16 @@ const RecommendationCard = ({ recommendation, onTakeTest, rank = 0 }) => {
         </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-slate-950/60 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Salary</p>
-            <p className="text-sm font-semibold text-white">{recommendation.salary}</p>
+        <div className="rounded-2xl border border-white/[0.06] bg-slate-950/60 p-5 space-y-4">
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Recommended Role</p>
+            <p className="text-base font-semibold text-white leading-tight">{recommendation.role}</p>
           </div>
-          <div className="rounded-2xl bg-slate-950/60 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">Market</p>
-            <p className={`text-sm font-semibold ${demandClass.split(' ')[0]}`}>{recommendation.demand}</p>
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-2">Market Demand</p>
+            <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold tracking-wide ${demandClass}`}>
+              {demandLevel} ({demandPct}%)
+            </span>
           </div>
         </div>
 
@@ -120,7 +121,7 @@ const RecommendationCard = ({ recommendation, onTakeTest, rank = 0 }) => {
       {/* CTA */}
       <div className="mt-auto p-6 pt-0">
         <button
-          onClick={() => onTakeTest(recommendation.domain)}
+          onClick={() => onTakeTest(recommendation.role)}
           className={`w-full rounded-2xl py-3 text-sm font-semibold transition-all duration-200
             ${isTop
               ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:from-indigo-500 hover:to-violet-500 hover:scale-[1.02] shadow-glow-sm'

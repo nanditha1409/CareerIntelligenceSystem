@@ -8,22 +8,34 @@ const formatDate = (value) => {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 };
 
-const EmptyState = ({ onStartAnalysis }) => (
+const EmptyState = ({ onStartAnalysis, onStartCompanyPractice }) => (
   <div className="glass p-8 text-center">
     <p className="section-label">Dashboard</p>
     <h2 className="mt-2 text-3xl font-semibold text-white">Your journey starts here</h2>
     <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-slate-400">
       Run your first skill analysis to start building recommendation history, readiness tracking, and a personalized roadmap.
     </p>
-    <button onClick={onStartAnalysis} className="btn-primary mt-6 text-sm">
-      Launch first analysis
-    </button>
+    <div className="mt-6 flex flex-wrap justify-center gap-3">
+      <button onClick={onStartAnalysis} className="btn-primary text-sm">
+        Launch first analysis
+      </button>
+      <button onClick={onStartCompanyPractice} className="btn-ghost text-sm">
+        Try Company Practice
+      </button>
+    </div>
   </div>
 );
 
-const TimelineCard = ({ title, items, renderMeta, renderBody, emptyLabel }) => (
+const TimelineCard = ({ title, items, renderMeta, renderBody, emptyLabel, onClear }) => (
   <div className="glass p-8">
-    <p className="section-label">{title}</p>
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <p className="section-label">{title}</p>
+      {onClear && items.length > 0 && (
+        <button type="button" onClick={onClear} className="btn-ghost text-xs shrink-0">
+          Clear
+        </button>
+      )}
+    </div>
     {items.length === 0 ? (
       <p className="mt-4 text-sm text-slate-500">{emptyLabel}</p>
     ) : (
@@ -42,7 +54,15 @@ const TimelineCard = ({ title, items, renderMeta, renderBody, emptyLabel }) => (
   </div>
 );
 
-const JourneyDashboard = ({ currentUser, dashboardData, dashboardLoading, onStartAnalysis }) => {
+const JourneyDashboard = ({
+  currentUser,
+  dashboardData,
+  dashboardLoading,
+  onStartAnalysis,
+  onStartCompanyPractice,
+  onClearRecommendationHistory,
+  onClearAssessmentHistory,
+}) => {
   if (dashboardLoading) {
     return (
       <div className="glass flex items-center justify-center p-12">
@@ -58,9 +78,10 @@ const JourneyDashboard = ({ currentUser, dashboardData, dashboardLoading, onStar
   const roadmap = dashboardData?.roadmap;
   const recommendationHistory = dashboardData?.recommendation_history || [];
   const assessmentHistory = dashboardData?.assessment_history || [];
+  const companyPerformance = dashboardData?.company_performance || [];
 
-  if (!overview || (overview.analyses_count === 0 && overview.assessments_count === 0)) {
-    return <EmptyState onStartAnalysis={onStartAnalysis} />;
+  if (!overview || (overview.analyses_count === 0 && overview.assessments_count === 0 && companyPerformance.length === 0)) {
+    return <EmptyState onStartAnalysis={onStartAnalysis} onStartCompanyPractice={onStartCompanyPractice} />;
   }
 
   return (
@@ -76,6 +97,9 @@ const JourneyDashboard = ({ currentUser, dashboardData, dashboardLoading, onStar
           </div>
           <button onClick={onStartAnalysis} className="btn-primary text-sm">
             Start a new analysis
+          </button>
+          <button onClick={onStartCompanyPractice} className="btn-ghost text-sm">
+            Company Practice
           </button>
         </div>
       </div>
@@ -194,11 +218,60 @@ const JourneyDashboard = ({ currentUser, dashboardData, dashboardLoading, onStar
         </div>
       )}
 
+      <div className="glass p-8">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="section-label">Company Performance</p>
+            <h3 className="mt-2 text-2xl font-semibold text-white">Practice by company and difficulty</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Tracks your previous-year style practice attempts grouped by company and level.
+            </p>
+          </div>
+          <button onClick={onStartCompanyPractice} className="btn-primary text-xs">
+            Practice now
+          </button>
+        </div>
+
+        {companyPerformance.length === 0 ? (
+          <p className="mt-5 text-sm text-slate-500">No company practice attempts yet.</p>
+        ) : (
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {companyPerformance.map((item) => (
+              <div key={`${item.company}-${item.level}`} className="rounded-3xl border border-white/[0.06] bg-slate-950/50 p-5">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-white">{item.company}</p>
+                    <p className="mt-1 text-xs capitalize text-slate-500">{item.level} level · {item.attempts} attempt{item.attempts !== 1 ? 's' : ''}</p>
+                  </div>
+                  <span className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-200">
+                    Best {item.best_score}%
+                  </span>
+                </div>
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl bg-slate-900/70 p-3">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Average</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{item.average_score}%</p>
+                  </div>
+                  <div className="rounded-2xl bg-slate-900/70 p-3">
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-slate-500">Latest</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{item.latest_score}%</p>
+                  </div>
+                </div>
+                <p className="mt-4 text-xs text-slate-500">
+                  Last attempt: {formatDate(item.latest_attempt_at)}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <TimelineCard
           title="Recommendation History"
           items={recommendationHistory}
           emptyLabel="No recommendation history yet."
+          onClear={onClearRecommendationHistory}
           renderMeta={(item) => (
             <div>
               <p className="text-sm font-semibold text-white">{item.top_domain}</p>
@@ -218,6 +291,7 @@ const JourneyDashboard = ({ currentUser, dashboardData, dashboardLoading, onStar
           title="Assessment History"
           items={assessmentHistory}
           emptyLabel="No assessments completed yet."
+          onClear={onClearAssessmentHistory}
           renderMeta={(item) => (
             <div>
               <p className="text-sm font-semibold text-white">{item.domain}</p>

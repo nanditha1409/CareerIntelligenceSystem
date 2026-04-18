@@ -2,24 +2,37 @@ import hashlib
 import hmac
 import secrets
 
-# ── Canonical skill list (must match dataset columns) ────────────────────────
+# ── Canonical skill list (must match dataset columns, in this exact order) ───
 SKILLS_LIST = [
     "python", "sql", "ml", "html", "css", "js",
     "docker", "linux", "figma", "react", "node",
-    "java", "dsa", "aws", "excel", "powerbi",
+    "java", "c", "cpp", "dsa", "aws", "excel", "powerbi",
     "tensorflow", "networking", "security",
     "git", "typescript", "mongodb", "redis",
     "kubernetes", "graphql", "rust", "go",
     "spark", "tableau", "pytorch",
-    "fastapi", "django",
+    "fastapi", "django", "ruby",
 ]
 
-# ── Alias normalisation ───────────────────────────────────────────────────────
+# ── ML / UI skill map: synonyms → canonical token (lowercase keys) ────────────
+SKILL_MAP = {
+    "ml": "ml",
+    "machine learning": "ml",
+    "ai": "ml",
+    "artificial intelligence": "ml",
+    "c": "c",
+    "c++": "cpp",
+    "cpp": "cpp",
+    "ruby": "ruby",
+}
+
+# ── Additional alias normalisation (legacy + common variants) ────────────────
 SKILL_ALIASES = {
+    **SKILL_MAP,
     "mysql": "sql", "postgres": "sql", "postgresql": "sql", "sqlite": "sql",
     "javascript": "js", "nodejs": "node", "reactjs": "react", "next.js": "react",
     "nextjs": "react", "vuejs": "js", "angular": "js",
-    "machine learning": "ml", "machinelearning": "ml", "deep learning": "ml",
+    "machinelearning": "ml", "deep learning": "ml",
     "aws cloud": "aws", "amazon web services": "aws",
     "linux os": "linux", "ubuntu": "linux", "debian": "linux",
     "excel sheets": "excel", "google sheets": "excel",
@@ -35,17 +48,26 @@ SKILL_ALIASES = {
     "tableau desktop": "tableau",
 }
 
+
+def _canonical_skill(raw: str) -> str:
+    """Lowercase, trim, collapse spaces, apply SKILL_ALIASES for a single token."""
+    s = raw.strip().lower().replace("-", " ")
+    s = " ".join(s.split())
+    if not s:
+        return ""
+    return SKILL_ALIASES.get(s, s)
+
 # ── Domain master skill sets ──────────────────────────────────────────────────
 DOMAIN_SKILLS = {
     "Data Scientist":        ["python", "ml", "sql", "tensorflow", "pytorch", "spark", "git", "tableau", "excel"],
     "AI-ML Engineer":        ["python", "ml", "tensorflow", "pytorch", "fastapi", "docker", "git", "aws", "kubernetes"],
     "Data Analyst":          ["sql", "excel", "powerbi", "tableau", "python", "git", "spark"],
     "Full Stack Developer":  ["html", "css", "js", "react", "node", "typescript", "mongodb", "graphql", "git", "docker"],
-    "Software Engineer":     ["python", "java", "dsa", "git", "html", "css", "js", "rust", "go"],
+    "Software Engineer":     ["python", "java", "c", "cpp", "dsa", "git", "html", "css", "js", "rust", "go", "ruby"],
     "DevOps Engineer":       ["docker", "linux", "aws", "kubernetes", "git", "python", "redis", "go"],
     "Cybersecurity Analyst": ["networking", "security", "linux", "python", "git"],
     "UI/UX Designer":        ["figma", "html", "css", "js", "react", "typescript"],
-    "Backend Developer":     ["python", "node", "sql", "fastapi", "django", "docker", "redis", "mongodb", "git"],
+    "Backend Developer":     ["python", "node", "sql", "fastapi", "django", "docker", "redis", "mongodb", "git", "ruby"],
 }
 
 # ── Domain metadata ───────────────────────────────────────────────────────────
@@ -175,6 +197,12 @@ SKILL_RESOURCES = {
                     {"title": "MDN CSS Docs",                            "url": "https://developer.mozilla.org/en-US/docs/Web/CSS",                  "type": "article"}],
     "js":          [{"title": "JavaScript Full Course – freeCodeCamp",  "url": "https://www.youtube.com/watch?v=PkZNo7MFNFg",                      "type": "video"},
                     {"title": "javascript.info",                         "url": "https://javascript.info/",                                         "type": "article"}],
+    "c":           [{"title": "CS50 Introduction to C",               "url": "https://cs50.harvard.edu/x/2023/",                                   "type": "course"},
+                    {"title": "C Reference – cppreference",              "url": "https://en.cppreference.com/w/c",                                   "type": "article"}],
+    "cpp":         [{"title": "Learn C++ – Microsoft",                  "url": "https://learn.microsoft.com/en-us/cpp/cpp/",                        "type": "article"},
+                    {"title": "C++ Core Guidelines",                   "url": "https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines",    "type": "article"}],
+    "ruby":        [{"title": "Ruby Official Documentation",            "url": "https://www.ruby-lang.org/en/documentation/",                     "type": "article"},
+                    {"title": "Ruby Course – freeCodeCamp",             "url": "https://www.youtube.com/watch?v=t_ispmWmdjY",                      "type": "video"}],
 }
 
 # ── Domain test questions ─────────────────────────────────────────────────────
@@ -293,12 +321,25 @@ DOMAIN_QUESTIONS = {
 # ── Core logic functions ──────────────────────────────────────────────────────
 
 def normalize_skills(user_skills: list[str]) -> list[str]:
-    """Normalise and alias-resolve a list of raw skill strings."""
-    result = []
+    """Normalise and alias-resolve raw skill strings (order-preserving, deduped)."""
+    seen: dict[str, None] = {}
     for skill in user_skills:
-        s = skill.strip().lower().replace("-", " ")
-        result.append(SKILL_ALIASES.get(s, s))
-    return list(set(result))  # deduplicate
+        c = _canonical_skill(skill)
+        if c:
+            seen[c] = None
+    return list(seen.keys())
+
+
+def skills_to_feature_vector(user_skills: list[str]) -> list[int]:
+    """
+    Build the binary feature vector for the ML model: one column per SKILLS_LIST entry.
+    Unknown or unmapped skills are ignored (all zeros for those features).
+    """
+    skill_set = set(normalize_skills(user_skills))
+    vec = [1 if name in skill_set else 0 for name in SKILLS_LIST]
+    if len(vec) != len(SKILLS_LIST):
+        raise ValueError("Feature vector length does not match SKILLS_LIST")
+    return vec
 
 
 def compute_skill_gap(user_skills: list[str], domain: str) -> dict:

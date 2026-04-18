@@ -52,7 +52,7 @@ const ResultDashboard = ({ result, domain, onRetake, onNewSearch }) => {
                        : 0;
 
   const correctCount   = Number.isFinite(result.correct_count) ? result.correct_count : null;
-  const totalQuestions = 10; // always 10 per domain
+  const totalQuestions = Number.isFinite(result.total_questions) ? result.total_questions : 10;
 
   const readiness      = result.readiness || {};
   const readinessScore = Number.isFinite(readiness.readiness_score) ? readiness.readiness_score : quizScore;
