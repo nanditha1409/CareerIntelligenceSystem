@@ -9,6 +9,7 @@ from common_utils import (  # noqa: F401
     normalize_skills,
     resolve_domain_name,
     calculate_compatibility_score,
+    compute_unified_score,
     rank_domains_by_compatibility,
     compute_skill_gap,
     compute_readiness_score,

@@ -29,17 +29,47 @@ const XAIPanel = ({ recommendations = [] }) => {
               </span>
               <p className="text-sm font-semibold text-white">{rec.domain}</p>
             </div>
-            <ul className="space-y-2.5">
-              {(rec.top_skills || []).map((insight, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
-                  <span className="mt-0.5 text-indigo-500 shrink-0">→</span>
-                  <span>{insight}</span>
-                </li>
-              ))}
-              {(!rec.top_skills || rec.top_skills.length === 0) && (
-                <li className="text-xs text-slate-600">No strong skill signals detected.</li>
-              )}
-            </ul>
+            {(() => {
+              const reasons  = rec.reason || rec.explanation || [];
+              const features = rec.feature_importance || [];
+              if (reasons.length > 0) {
+                return (
+                  <ul className="space-y-2.5">
+                    {reasons.slice(0, 3).map((r, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
+                        <span className="mt-0.5 text-indigo-500 shrink-0">→</span>
+                        <span>{r}</span>
+                      </li>
+                    ))}
+                  </ul>
+                );
+              }
+              if (features.length > 0) {
+                return (
+                  <ul className="space-y-2">
+                    {features.slice(0, 4).map((f, i) => (
+                      <li key={i} className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-slate-300">{f.skill || f}</span>
+                          <span className="text-indigo-400">
+                            {f.importance ? `${Math.round(f.importance * 100)}%` : ''}
+                          </span>
+                        </div>
+                        {f.importance && (
+                          <div className="h-1 w-full rounded-full bg-slate-800">
+                            <div
+                              className="h-1 rounded-full bg-indigo-500"
+                              style={{ width: `${Math.min(100, Math.round(f.importance * 100))}%` }}
+                            />
+                          </div>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                );
+              }
+              return <p className="text-xs text-slate-600">No skill signals detected.</p>;
+            })()}
           </div>
         ))}
       </div>

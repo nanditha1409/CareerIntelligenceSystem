@@ -22,6 +22,7 @@ import sys
 from typing import Any
 
 import numpy as np
+import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -254,3 +255,47 @@ def find_similar_domains(
 def semantic_skill_match(skill: str, domain: str) -> float:
     """Return 0-1 similarity between a skill token and a domain."""
     return _get_engine().semantic_skill_match(skill, domain)
+
+
+def evaluate_similarity_engine(df: pd.DataFrame) -> dict[str, float]:
+    """
+    Proxy-evaluate the TF-IDF similarity engine with retrieval accuracy metrics.
+    """
+    engine = TFIDFSimilarityEngine()
+    total = 0
+    hits_at_1 = 0
+    hits_at_3 = 0
+    correct_scores: list[float] = []
+    incorrect_scores: list[float] = []
+
+    for _, row in df.iterrows():
+        skills_text = str(row.get("skills_text", "")).strip()
+        label = str(row.get("domain_label", "")).strip()
+        if not skills_text or not label:
+            continue
+
+        results = engine.find_similar_domains(skills_text.split(), top_k=3)
+        if not results:
+            continue
+
+        total += 1
+        top_1 = results[0]
+        top_domains = [item.get("domain") for item in results]
+        top_score = float(top_1.get("similarity_score", 0.0))
+
+        if top_1.get("domain") == label:
+            hits_at_1 += 1
+            correct_scores.append(top_score)
+        else:
+            incorrect_scores.append(top_score)
+
+        if label in top_domains:
+            hits_at_3 += 1
+
+    return {
+        "accuracy_at_1": round((hits_at_1 / total) if total else 0.0, 4),
+        "accuracy_at_3": round((hits_at_3 / total) if total else 0.0, 4),
+        "mean_sim_correct": round(sum(correct_scores) / len(correct_scores), 4) if correct_scores else 0.0,
+        "mean_sim_incorrect": round(sum(incorrect_scores) / len(incorrect_scores), 4) if incorrect_scores else 0.0,
+        "n_samples": total,
+    }

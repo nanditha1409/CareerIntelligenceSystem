@@ -1,58 +1,79 @@
-import React, { useState, useRef, useEffect } from 'react';
-import Navbar from './components/Navbar';
-import SkillInput from './components/SkillInput';
-import RecommendationCard from './components/RecommendationCard';
-import TestSection from './components/TestSection';
-import ResultDashboard from './components/ResultDashboard';
-import SkillGapPanel from './components/SkillGapPanel';
-import XAIPanel from './components/XAIPanel';
-import HowItWorks from './components/HowItWorks';
-import DomainsGrid from './components/DomainsGrid';
-import ResultsHistory, { saveResult } from './components/ResultsHistory';
-import AuthPage from './components/AuthPage';
-import Phi3Chatbot from './components/Phi3Chatbot';
-import { buildAuthHeaders, clearAuth, getStoredAuth, saveAuth } from './utils/auth';
+import React, { useState, useRef, useEffect } from "react";
+import Navbar from "./components/Navbar";
+import SkillInput from "./components/SkillInput";
+import RecommendationCard from "./components/RecommendationCard";
+import TestSection from "./components/TestSection";
+import ResultDashboard from "./components/ResultDashboard";
+import SkillGapPanel from "./components/SkillGapPanel";
+import XAIPanel from "./components/XAIPanel";
+import HowItWorks from "./components/HowItWorks";
+import DomainsGrid from "./components/DomainsGrid";
+import ResultsHistory, { saveResult } from "./components/ResultsHistory";
+import AuthPage from "./components/AuthPage";
 
-const API  = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+import ResumeSummaryPanel from "./components/ResumeSummaryPanel";
+import {
+  buildAuthHeaders,
+  clearAuth,
+  getStoredAuth,
+  saveAuth,
+} from "./utils/auth";
+import Phi3Chatbot from "./components/Phi3Chatbot";
+import Chatbot from "./components/Chatbot";
+
+const API = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 // Addition: lazy-load the Practice view so the large static question config stays isolated.
-const PracticeTab = React.lazy(() => import('./components/PracticeTab'));
+const PracticeTab = React.lazy(() => import("./components/PracticeTab"));
 
 // Addition: extend the existing view routing with a dedicated Practice dashboard page.
-const VIEW = { HOME: 'home', AUTH: 'auth', RECS: 'recs', TEST: 'test', RESULTS: 'results', PRACTICE: 'practice' };
+const VIEW = {
+  HOME: "home",
+  AUTH: "auth",
+  RECS: "recs",
+  TEST: "test",
+  RESULTS: "results",
+  PRACTICE: "practice",
+  CHAT: "chat",
+};
 
 const STATS = [
-  { value: '9+',  label: 'Career domains' },
-  { value: '32',  label: 'Skills tracked' },
-  { value: '91%', label: 'Model accuracy' },
-  { value: '540', label: 'Training samples' },
+  { value: "9+", label: "Career domains" },
+  { value: "32", label: "Skills tracked" },
+  { value: "91%", label: "Model accuracy" },
+  { value: "540", label: "Training samples" },
 ];
 
 export default function App() {
   // Theme: load persisted preference, default to 'dark'. Applied as a class on <body>.
-  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
 
   // Set body class and persist to localStorage on every theme change.
   useEffect(() => {
     document.body.className = theme;
-    localStorage.setItem('theme', theme);
+    localStorage.setItem("theme", theme);
   }, [theme]);
 
-  const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  const toggleTheme = () =>
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
 
   const storedAuth = getStoredAuth();
   // Default landing: show AUTH if not logged in, HOME if already authenticated.
-  const [view, setView]                       = useState(storedAuth ? VIEW.HOME : VIEW.AUTH);
-  const [auth, setAuth]                       = useState(() => storedAuth);
-  const [isLoading, setIsLoading]             = useState(false);
-  const [error, setError]                     = useState(null);
-  const [currentSkills, setCurrentSkills]     = useState({});
+  const [view, setView] = useState(storedAuth ? VIEW.HOME : VIEW.AUTH);
+  const [auth, setAuth] = useState(() => storedAuth);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [currentSkills, setCurrentSkills] = useState({});
   const [recommendations, setRecommendations] = useState([]);
-  const [skillGap, setSkillGap]               = useState([]);
-  const [resources, setResources]             = useState([]);
-  const [selectedDomain, setSelectedDomain]   = useState('');
-  const [testResult, setTestResult]           = useState(null);
+  const [skillGap, setSkillGap] = useState([]);
+  const [resources, setResources] = useState([]);
+  const [selectedDomain, setSelectedDomain] = useState("");
+  const [experienceLevel, setExperienceLevel] = useState("no_experience");
+  const [testResult, setTestResult] = useState(null);
+  const [resumeData, setResumeData] = useState(null);
+  const [resumeFilename, setResumeFilename] = useState("");
+
   const inputRef = useRef(null);
-  const token = auth?.access_token || '';
+  const token = auth?.access_token || "";
   const user = auth?.user || null;
 
   // When navigating back to HOME via nav links, scroll to the right section
@@ -65,7 +86,16 @@ export default function App() {
     setView(VIEW.PRACTICE);
   };
 
-  const handleAnalyze = async (skillsObj) => {
+  // Dedicated handler for the chatbot page.
+  const handleChatOpen = () => {
+    setView(VIEW.CHAT);
+  };
+
+  const handleAnalyze = async ({
+    skills,
+    preferredDomain,
+    experienceLevel,
+  }) => {
     if (!token) {
       setView(VIEW.AUTH);
       return;
@@ -74,16 +104,24 @@ export default function App() {
     setIsLoading(true);
     try {
       const res = await fetch(`${API}/recommend-career`, {
-        method:  'POST',
-        headers: buildAuthHeaders(token, { 'Content-Type': 'application/json' }),
-        body:    JSON.stringify({ skills: skillsObj, user_id: user?.id ? String(user.id) : null }),
+        method: "POST",
+        headers: buildAuthHeaders(token, {
+          "Content-Type": "application/json",
+        }),
+        body: JSON.stringify({
+          skills,
+          preferred_domain: preferredDomain || null,
+          experience_level: experienceLevel || null,
+          user_id: user?.id ? String(user.id) : null,
+        }),
       });
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.detail || 'Failed to get recommendations');
+        throw new Error(err.detail || "Failed to get recommendations");
       }
       const data = await res.json();
-      setCurrentSkills(skillsObj);
+      setCurrentSkills(skills);
+      setExperienceLevel(experienceLevel || "no_experience");
       setRecommendations(data.recommendations || []);
       setSkillGap(data.skill_gap || []);
       setResources(data.resources || []);
@@ -109,15 +147,24 @@ export default function App() {
     setTestResult(result);
     // Persist to localStorage history
     saveResult(selectedDomain, result);
-    window.dispatchEvent(new Event('careerbloom_history_updated'));
+    window.dispatchEvent(new Event("careerbloom_history_updated"));
     setView(VIEW.RESULTS);
   };
 
-  const handleRetake = () => { setTestResult(null); setView(VIEW.TEST); };
+  const handleRetake = () => {
+    setTestResult(null);
+    setView(VIEW.TEST);
+  };
 
   const handleNewSearch = () => {
-    setRecommendations([]); setSkillGap([]); setResources([]);
-    setTestResult(null); setSelectedDomain(''); setCurrentSkills({});
+    setRecommendations([]);
+    setSkillGap([]);
+    setResources([]);
+    setTestResult(null);
+    setSelectedDomain("");
+    setCurrentSkills({});
+    setResumeData(null);
+    setResumeFilename("");
     setView(VIEW.HOME);
   };
 
@@ -149,9 +196,11 @@ export default function App() {
   return (
     // Light mode: swap slate-950 background for a light surface via Tailwind dark: variant
     <div className="relative min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-x-hidden transition-colors duration-300">
-
       {/* Background glow blobs */}
-      <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 overflow-hidden"
+      >
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-[600px] w-[900px] rounded-full bg-indigo-600/10 blur-[120px]" />
         <div className="absolute top-1/3 -right-40 h-[400px] w-[600px] rounded-full bg-violet-600/8 blur-[100px]" />
         <div className="absolute bottom-0 -left-40 h-[400px] w-[600px] rounded-full bg-indigo-800/8 blur-[100px]" />
@@ -169,6 +218,8 @@ export default function App() {
         onNavClick={handleNavClick}
         onPracticeClick={handlePracticeOpen}
         isPracticeActive={view === VIEW.PRACTICE}
+        onChatClick={handleChatOpen}
+        isChatActive={view === VIEW.CHAT}
         user={user}
         onAuthClick={() => setView(VIEW.AUTH)}
         onLogout={handleLogout}
@@ -191,12 +242,16 @@ export default function App() {
       )}
 
       <main className="relative mx-auto max-w-6xl px-6 py-12 lg:px-8">
-
         {/* Error banner */}
         {error && (
           <div className="mb-8 flex items-center justify-between rounded-2xl border border-rose-500/30 bg-rose-500/10 px-5 py-4 text-sm text-rose-300 animate-fade-in">
             <span>{error}</span>
-            <button onClick={() => setError(null)} className="ml-4 text-rose-400 hover:text-white transition-colors">✕</button>
+            <button
+              onClick={() => setError(null)}
+              className="ml-4 text-rose-400 hover:text-white transition-colors"
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -211,23 +266,48 @@ export default function App() {
                   AI-powered career intelligence
                 </div>
                 <h1 className="text-5xl font-extrabold text-white leading-[1.1] tracking-tight sm:text-6xl lg:text-7xl">
-                  Find your ideal<br />
+                  Find your ideal
+                  <br />
                   <span className="gradient-text">career path</span>
                 </h1>
                 <p className="text-slate-400 max-w-lg mx-auto text-lg leading-relaxed">
-                  Enter your skills and get data-driven recommendations, skill gap analysis, and a personalised readiness score — in seconds.
+                  Enter your skills and get data-driven recommendations, skill
+                  gap analysis, and a personalised readiness score — in seconds.
                 </p>
               </div>
 
               <div ref={inputRef}>
-                <SkillInput onAnalyze={handleAnalyze} isLoading={isLoading} />
+                <SkillInput
+                  onAnalyze={handleAnalyze}
+                  isLoading={isLoading}
+                  onResumeData={(data, filename) => {
+                    setResumeData(data);
+                    setResumeFilename(filename);
+                  }}
+                />
               </div>
+
+              {/* Resume summary panel — shown after a successful upload */}
+              {resumeData && (
+                <ResumeSummaryPanel
+                  filename={resumeFilename}
+                  yearsOfExperience={resumeData.years_of_experience}
+                  domainScores={resumeData.domain_scores}
+                  semanticMatches={resumeData.semantic_matches}
+                  onDismiss={() => setResumeData(null)}
+                />
+              )}
 
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 animate-slide-up animation-delay-300">
                 {STATS.map(({ value, label }) => (
-                  <div key={label} className="glass flex flex-col items-center gap-1 py-5 px-4 text-center">
-                    <span className="text-2xl font-bold gradient-text">{value}</span>
+                  <div
+                    key={label}
+                    className="glass flex flex-col items-center gap-1 py-5 px-4 text-center"
+                  >
+                    <span className="text-2xl font-bold gradient-text">
+                      {value}
+                    </span>
                     <span className="text-xs text-slate-500">{label}</span>
                   </div>
                 ))}
@@ -258,13 +338,22 @@ export default function App() {
             <div className="flex items-center justify-between animate-fade-in">
               <div>
                 <p className="section-label">Recommendations</p>
-                <h2 className="mt-2 text-3xl font-semibold text-white">Your top career matches</h2>
+                <h2 className="mt-2 text-3xl font-semibold text-white">
+                  Your top career matches
+                </h2>
               </div>
-              <button onClick={handleNewSearch} className="btn-ghost text-xs">New search</button>
+              <button onClick={handleNewSearch} className="btn-ghost text-xs">
+                New search
+              </button>
             </div>
             <div className="grid gap-6 lg:grid-cols-3 animate-slide-up">
               {recommendations.map((rec, i) => (
-                <RecommendationCard key={i} recommendation={rec} onTakeTest={handleTakeTest} rank={i} />
+                <RecommendationCard
+                  key={i}
+                  recommendation={rec}
+                  onTakeTest={handleTakeTest}
+                  rank={i}
+                />
               ))}
             </div>
             <XAIPanel recommendations={recommendations} />
@@ -278,7 +367,9 @@ export default function App() {
             domain={selectedDomain}
             skills={currentSkills}
             onComplete={handleTestComplete}
-            onBack={() => setView(recommendations.length ? VIEW.RECS : VIEW.HOME)}
+            onBack={() =>
+              setView(recommendations.length ? VIEW.RECS : VIEW.HOME)
+            }
             token={token}
             user={user}
           />
@@ -289,33 +380,45 @@ export default function App() {
           <ResultDashboard
             result={testResult}
             domain={selectedDomain}
+            recommendations={recommendations}
             onRetake={handleRetake}
             onNewSearch={handleNewSearch}
             token={token}
+            skills={currentSkills}
+            experienceLevel={experienceLevel}
           />
         )}
+
+        {/* ── CHAT ─────────────────────────────────────────────────────────── */}
+        {view === VIEW.CHAT && <Chatbot onBack={() => setView(VIEW.HOME)} />}
 
         {/* Addition: isolated Practice route that reuses the dashboard container without changing surrounding layout. */}
         {view === VIEW.PRACTICE && (
           <React.Suspense
             fallback={
               <div className="glass p-12 text-center">
-                <p className="section-label">Practice</p>
-                <p className="mt-3 text-sm text-slate-400">Loading company-wise practice questions…</p>
+                <p className="section-label">Company Tracks</p>
+                <p className="mt-3 text-sm text-slate-400">
+                  Loading company-wise coding questions…
+                </p>
               </div>
             }
           >
             {/* Addition: pass the existing skill profile so Practice can prioritize relevant questions locally. */}
-            <PracticeTab onBack={() => setView(VIEW.HOME)} currentSkills={currentSkills} />
+            <PracticeTab
+              onBack={() => setView(VIEW.HOME)}
+              currentSkills={currentSkills}
+            />
           </React.Suspense>
         )}
       </main>
 
       <footer className="relative mt-24 border-t border-white/[0.05] py-8 text-center text-xs text-slate-600">
-        CareerBloom — AI Career Intelligence · Built with FastAPI + React + Tailwind
+        NextStep — AI Career Intelligence · Built with FastAPI + React +
+        Tailwind
       </footer>
 
-      {/* Addition: mount the Phi-3 chatbot globally as a separate feature without altering existing flows. */}
+      {/* Global career chatbot — bottom-left, available on every page */}
       <Phi3Chatbot />
     </div>
   );

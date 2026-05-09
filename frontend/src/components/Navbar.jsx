@@ -1,15 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
 
 const NAV_ITEMS = [
-  { label: 'How it works', id: 'how-it-works' },
-  { label: 'Domains',      id: 'domains' },
-  { label: 'Results',      id: 'results' },
+  { label: "How it works", id: "how-it-works" },
+  { label: "Domains", id: "domains" },
+  { label: "Results", id: "results" },
 ];
 
-const Navbar = ({ onLaunch, onNavClick, onPracticeClick, isPracticeActive, user, onAuthClick, onLogout, theme, onToggleTheme }) => {
-  const [scrolled, setScrolled]   = useState(false);
-  const [active, setActive]       = useState('');
-  const [menuOpen, setMenuOpen]   = useState(false);
+const Navbar = ({
+  onLaunch,
+  onNavClick,
+  onPracticeClick,
+  isPracticeActive,
+  onChatClick,
+  isChatActive,
+  user,
+  onAuthClick,
+  onLogout,
+  theme,
+  onToggleTheme,
+}) => {
+  const [scrolled, setScrolled] = useState(false);
+  const [active, setActive] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => {
@@ -22,10 +34,10 @@ const Navbar = ({ onLaunch, onNavClick, onPracticeClick, isPracticeActive, user,
           return;
         }
       }
-      setActive('');
+      setActive("");
     };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const scrollTo = (id) => {
@@ -35,7 +47,7 @@ const Navbar = ({ onLaunch, onNavClick, onPracticeClick, isPracticeActive, user,
     // Small delay so view switch can render the section before scrolling
     setTimeout(() => {
       const el = document.getElementById(id);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);
   };
 
@@ -43,25 +55,41 @@ const Navbar = ({ onLaunch, onNavClick, onPracticeClick, isPracticeActive, user,
     <header
       className={`sticky top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? 'border-b border-white/[0.06] bg-slate-950/80 backdrop-blur-xl shadow-[0_1px_0_rgba(255,255,255,0.04)]'
-          : 'bg-transparent'
+          ? "border-b border-white/[0.06] bg-slate-950/80 backdrop-blur-xl shadow-[0_1px_0_rgba(255,255,255,0.04)]"
+          : "bg-transparent"
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 lg:px-8">
-
         {/* Logo */}
         <button
-          onClick={() => scrollTo('how-it-works') || window.scrollTo({ top: 0, behavior: 'smooth' })}
+          onClick={() =>
+            scrollTo("how-it-works") ||
+            window.scrollTo({ top: 0, behavior: "smooth" })
+          }
           className="flex items-center gap-3"
         >
           <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-glow-sm">
-            <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+            <svg
+              className="h-4 w-4 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"
+              />
             </svg>
           </div>
           <div className="text-left">
-            <p className="text-sm font-bold tracking-tight text-white">CareerBloom</p>
-            <p className="text-[10px] uppercase tracking-[0.25em] text-slate-500 leading-none">AI Intelligence</p>
+            <p className="text-sm font-bold tracking-tight text-white">
+              NextStep
+            </p>
+            <p className="text-[10px] uppercase tracking-[0.25em] text-slate-500 leading-none">
+              AI Intelligence
+            </p>
           </div>
         </button>
 
@@ -73,8 +101,8 @@ const Navbar = ({ onLaunch, onNavClick, onPracticeClick, isPracticeActive, user,
               onClick={() => scrollTo(id)}
               className={`rounded-full px-4 py-2 text-sm transition-all duration-150 ${
                 active === id
-                  ? 'bg-indigo-500/15 text-white font-medium'
-                  : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+                  ? "bg-indigo-500/15 text-white font-medium"
+                  : "text-slate-400 hover:text-white hover:bg-white/[0.05]"
               }`}
             >
               {label}
@@ -85,11 +113,22 @@ const Navbar = ({ onLaunch, onNavClick, onPracticeClick, isPracticeActive, user,
             onClick={onPracticeClick}
             className={`rounded-full px-4 py-2 text-sm transition-all duration-150 ${
               isPracticeActive
-                ? 'bg-indigo-500/15 text-white font-medium'
-                : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+                ? "bg-indigo-500/15 text-white font-medium"
+                : "text-slate-400 hover:text-white hover:bg-white/[0.05]"
             }`}
           >
-            Practice
+            Company Tracks
+          </button>
+          {/* Chat nav entry */}
+          <button
+            onClick={onChatClick}
+            className={`rounded-full px-4 py-2 text-sm transition-all duration-150 ${
+              isChatActive
+                ? "bg-indigo-500/15 text-white font-medium"
+                : "text-slate-400 hover:text-white hover:bg-white/[0.05]"
+            }`}
+          >
+            AI Chat
           </button>
         </nav>
 
@@ -101,15 +140,35 @@ const Navbar = ({ onLaunch, onNavClick, onPracticeClick, isPracticeActive, user,
             aria-label="Toggle light/dark mode"
             className="hidden sm:flex h-8 w-8 items-center justify-center rounded-xl border border-slate-700 dark:border-slate-700 border-slate-300 text-slate-400 dark:text-slate-400 text-slate-600 hover:border-indigo-500/60 hover:text-white dark:hover:text-white hover:text-slate-900 transition-colors"
           >
-            {theme === 'dark' ? (
+            {theme === "dark" ? (
               // Sun icon — shown in dark mode to switch to light
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"
+                />
               </svg>
             ) : (
               // Moon icon — shown in light mode to switch to dark
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"
+                />
               </svg>
             )}
           </button>
@@ -120,19 +179,35 @@ const Navbar = ({ onLaunch, onNavClick, onPracticeClick, isPracticeActive, user,
               <span>{user.full_name}</span>
             </div>
           ) : (
-            <button onClick={onAuthClick} className="btn-ghost text-xs px-4 py-2">
+            <button
+              onClick={onAuthClick}
+              className="btn-ghost text-xs px-4 py-2"
+            >
               Sign In
             </button>
           )}
 
           <button onClick={onLaunch} className="btn-primary text-xs px-4 py-2">
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+            <svg
+              className="h-3.5 w-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z"
+              />
             </svg>
             Launch analysis
           </button>
           {user && (
-            <button onClick={onLogout} className="btn-ghost text-xs px-4 py-2 hidden sm:inline-flex">
+            <button
+              onClick={onLogout}
+              className="btn-ghost text-xs px-4 py-2 hidden sm:inline-flex"
+            >
               Logout
             </button>
           )}
@@ -144,12 +219,32 @@ const Navbar = ({ onLaunch, onNavClick, onPracticeClick, isPracticeActive, user,
             aria-label="Toggle menu"
           >
             {menuOpen ? (
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             ) : (
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                />
               </svg>
             )}
           </button>
@@ -164,7 +259,7 @@ const Navbar = ({ onLaunch, onNavClick, onPracticeClick, isPracticeActive, user,
             onClick={onToggleTheme}
             className="block w-full text-left rounded-2xl px-4 py-3 text-sm text-slate-400 dark:text-slate-400 hover:text-white dark:hover:text-white hover:bg-white/[0.04] transition-colors"
           >
-            {theme === 'dark' ? '☀️ Light mode' : '🌙 Dark mode'}
+            {theme === "dark" ? "☀️ Light mode" : "🌙 Dark mode"}
           </button>
           {/* Addition: mobile Practice entry mirrors the existing mobile nav item pattern. */}
           <button
@@ -173,17 +268,35 @@ const Navbar = ({ onLaunch, onNavClick, onPracticeClick, isPracticeActive, user,
               if (onPracticeClick) onPracticeClick();
             }}
             className={`block w-full text-left rounded-2xl px-4 py-3 text-sm transition-colors ${
-              isPracticeActive ? 'bg-indigo-500/15 text-white' : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+              isPracticeActive
+                ? "bg-indigo-500/15 text-white"
+                : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
             }`}
           >
-            Practice
+            Company Tracks
+          </button>
+          {/* Mobile Chat entry */}
+          <button
+            onClick={() => {
+              setMenuOpen(false);
+              if (onChatClick) onChatClick();
+            }}
+            className={`block w-full text-left rounded-2xl px-4 py-3 text-sm transition-colors ${
+              isChatActive
+                ? "bg-indigo-500/15 text-white"
+                : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+            }`}
+          >
+            AI Chat
           </button>
           {NAV_ITEMS.map(({ label, id }) => (
             <button
               key={id}
               onClick={() => scrollTo(id)}
               className={`block w-full text-left rounded-2xl px-4 py-3 text-sm transition-colors ${
-                active === id ? 'bg-indigo-500/15 text-white' : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                active === id
+                  ? "bg-indigo-500/15 text-white"
+                  : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
               }`}
             >
               {label}

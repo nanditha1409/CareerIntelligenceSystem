@@ -6,7 +6,7 @@ const getSourceLabel = (link) => {
   if (link.includes('leetcode.com')) return 'LeetCode';
   if (link.includes('geeksforgeeks.org')) return 'GeeksforGeeks';
   if (link.includes('hackerrank.com')) return 'HackerRank';
-  return 'Practice Link';
+  return 'Company Track';
 };
 
 // Addition: localStorage key for solved-question persistence across refreshes.
@@ -116,14 +116,14 @@ const PracticeTab = ({ onBack, currentSkills = {} }) => {
 
   return (
     <div className="space-y-8 animate-slide-up">
-      {/* Addition: Practice page header, aligned with the existing recommendations/results headers. */}
+      {/* Addition: Company Tracks page header, aligned with the existing recommendations/results headers. */}
       <div className="glass p-8">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <p className="section-label">Practice</p>
-            <h2 className="mt-2 text-3xl font-semibold text-white">Company-wise coding questions</h2>
+            <p className="section-label">Company Tracks</p>
+            <h2 className="mt-2 text-3xl font-semibold text-white">Company-Wise Coding, HR & Technical Questions</h2>
             <p className="mt-1.5 text-sm text-slate-400 max-w-2xl">
-              Direct practice links grouped by company so you can prepare using familiar coding interview patterns.
+              Company-specific coding links plus HR and technical interview prompts so you can prepare in one place.
             </p>
           </div>
           <button onClick={onBack} className="btn-ghost text-xs shrink-0">Back to home</button>
@@ -171,7 +171,7 @@ const PracticeTab = ({ onBack, currentSkills = {} }) => {
       {selectedCompanyBlock && (
         <div key={selectedCompanyBlock.company} className="glass p-8">
           <div className="mb-5">
-            <p className="section-label">Practice Set</p>
+            <p className="section-label">Company Track</p>
             <h3 className="mt-2 text-2xl font-semibold text-white">{selectedCompanyBlock.company}</h3>
             <p className="mt-1 text-sm text-slate-500">
               {visibleQuestions.length} coding question{visibleQuestions.length !== 1 ? 's' : ''} shown

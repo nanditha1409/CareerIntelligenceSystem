@@ -1,3 +1,8 @@
+# SETUP ORDER:
+# 1. pip install torch --index-url https://download.pytorch.org/whl/cpu
+# 2. pip install -r requirements.txt
+# 3. python -m spacy download en_core_web_sm
+
 fastapi==0.111.0
 uvicorn[standard]==0.29.0
 scikit-learn==1.4.2
@@ -11,6 +16,9 @@ pypdf==4.3.1
 python-docx==1.1.2
 requests==2.32.3
 numpy>=1.26.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.9
 
 # Task 1: XGBoost classifier (optional — falls back to RandomForest if absent)
 xgboost>=2.0.0
@@ -18,8 +26,12 @@ xgboost>=2.0.0
 # Task 2 & 3: NLP resume parsing + ML pipeline
 pdfplumber>=0.11.0
 pymupdf>=1.24.0
+# After install: python -m spacy download en_core_web_sm
 spacy>=3.7.0
-# After install run: python -m spacy download en_core_web_sm
 
 # Task 3: Semantic similarity (optional — falls back to TF-IDF if absent)
-sentence-transformers>=2.7.0
+sentence-transformers>=2.2.2
+# Install torch CPU-only FIRST (before pip install -r requirements.txt):
+# pip install torch --index-url https://download.pytorch.org/whl/cpu
+# torch>=2.0.0   ← already installed by the line above, skip if on CPU-only machine
+ollama>=0.2.0

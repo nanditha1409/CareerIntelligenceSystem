@@ -1,110 +1,1954 @@
 {
   "Data Scientist": [
-    {"id": "ds_01", "text": "Which Pandas method removes rows with missing values?", "options": ["df.fillna()", "df.dropna()", "df.isnull()", "df.replace()"], "correct_index": 1, "sub_topic": "Data Manipulation"},
-    {"id": "ds_02", "text": "What does df.groupby('col').agg('mean') return?", "options": ["A filtered DataFrame", "Mean of each group", "A pivot table", "A sorted Series"], "correct_index": 1, "sub_topic": "Data Manipulation"},
-    {"id": "ds_03", "text": "Which metric is best for imbalanced classification datasets?", "options": ["Accuracy", "F1-Score", "MSE", "R²"], "correct_index": 1, "sub_topic": "Machine Learning"},
-    {"id": "ds_04", "text": "What is the purpose of cross-validation?", "options": ["Speed up training", "Reduce dataset size", "Estimate generalisation performance", "Increase model complexity"], "correct_index": 2, "sub_topic": "Machine Learning"},
-    {"id": "ds_05", "text": "What does a p-value < 0.05 indicate in hypothesis testing?", "options": ["Accept the null hypothesis", "Reject the null hypothesis", "Inconclusive result", "Data is normally distributed"], "correct_index": 1, "sub_topic": "Statistics"},
-    {"id": "ds_06", "text": "Which measure is most resistant to outliers?", "options": ["Mean", "Variance", "Median", "Standard Deviation"], "correct_index": 2, "sub_topic": "Statistics"},
-    {"id": "ds_07", "text": "What is one-hot encoding used for?", "options": ["Normalising numeric features", "Converting categorical variables to binary columns", "Reducing dimensionality", "Handling missing values"], "correct_index": 1, "sub_topic": "Feature Engineering"},
-    {"id": "ds_08", "text": "Which technique reduces feature dimensionality while preserving variance?", "options": ["One-hot encoding", "Label encoding", "PCA", "Min-Max scaling"], "correct_index": 2, "sub_topic": "Feature Engineering"},
-    {"id": "ds_09", "text": "What does the ROC-AUC score measure?", "options": ["Regression accuracy", "Ability to distinguish between classes", "Training speed", "Feature importance"], "correct_index": 1, "sub_topic": "Model Evaluation"},
-    {"id": "ds_10", "text": "Which of these is an unsupervised learning algorithm?", "options": ["Linear Regression", "Random Forest", "K-Means Clustering", "Logistic Regression"], "correct_index": 2, "sub_topic": "Model Evaluation"}
+    {
+      "id": "ds_01",
+      "text": "Which Pandas method removes rows with missing values?",
+      "options": [
+        "df.fillna()",
+        "df.dropna()",
+        "df.isnull()",
+        "df.replace()"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Data Manipulation"
+    },
+    {
+      "id": "ds_02",
+      "text": "What does df.groupby('col').agg('mean') return?",
+      "options": [
+        "A filtered DataFrame",
+        "Mean of each group",
+        "A pivot table",
+        "A sorted Series"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Data Manipulation"
+    },
+    {
+      "id": "ds_03",
+      "text": "Which metric is best for imbalanced classification datasets?",
+      "options": [
+        "Accuracy",
+        "F1-Score",
+        "MSE",
+        "R\u00b2"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Machine Learning"
+    },
+    {
+      "id": "ds_04",
+      "text": "What is the purpose of cross-validation?",
+      "options": [
+        "Speed up training",
+        "Reduce dataset size",
+        "Estimate generalisation performance",
+        "Increase model complexity"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Machine Learning"
+    },
+    {
+      "id": "ds_05",
+      "text": "What does a p-value < 0.05 indicate in hypothesis testing?",
+      "options": [
+        "Accept the null hypothesis",
+        "Reject the null hypothesis",
+        "Inconclusive result",
+        "Data is normally distributed"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Statistics"
+    },
+    {
+      "id": "ds_06",
+      "text": "Which measure is most resistant to outliers?",
+      "options": [
+        "Mean",
+        "Variance",
+        "Median",
+        "Standard Deviation"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Statistics"
+    },
+    {
+      "id": "ds_07",
+      "text": "What is one-hot encoding used for?",
+      "options": [
+        "Normalising numeric features",
+        "Converting categorical variables to binary columns",
+        "Reducing dimensionality",
+        "Handling missing values"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Feature Engineering"
+    },
+    {
+      "id": "ds_08",
+      "text": "Which technique reduces feature dimensionality while preserving variance?",
+      "options": [
+        "One-hot encoding",
+        "Label encoding",
+        "PCA",
+        "Min-Max scaling"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Feature Engineering"
+    },
+    {
+      "id": "ds_09",
+      "text": "What does the ROC-AUC score measure?",
+      "options": [
+        "Regression accuracy",
+        "Ability to distinguish between classes",
+        "Training speed",
+        "Feature importance"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Model Evaluation"
+    },
+    {
+      "id": "ds_10",
+      "text": "Which of these is an unsupervised learning algorithm?",
+      "options": [
+        "Linear Regression",
+        "Random Forest",
+        "K-Means Clustering",
+        "Logistic Regression"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Model Evaluation"
+    }
   ],
   "AI-ML Engineer": [
-    {"id": "ml_01", "text": "What problem does Batch Normalisation solve?", "options": ["Overfitting", "Internal covariate shift", "Vanishing gradients only", "Data imbalance"], "correct_index": 1, "sub_topic": "Deep Learning"},
-    {"id": "ml_02", "text": "Which architecture is best suited for sequential data?", "options": ["CNN", "GAN", "LSTM", "Autoencoder"], "correct_index": 2, "sub_topic": "Deep Learning"},
-    {"id": "ml_03", "text": "What is the role of the discriminator in a GAN?", "options": ["Generate fake data", "Classify real vs. fake data", "Encode input features", "Reduce dimensionality"], "correct_index": 1, "sub_topic": "Deep Learning"},
-    {"id": "ml_04", "text": "What does the learning rate control in gradient descent?", "options": ["Number of epochs", "Step size during weight updates", "Batch size", "Number of layers"], "correct_index": 1, "sub_topic": "Optimisation"},
-    {"id": "ml_05", "text": "Which optimiser adapts the learning rate per parameter?", "options": ["SGD", "Momentum", "Adam", "Perceptron"], "correct_index": 2, "sub_topic": "Optimisation"},
-    {"id": "ml_06", "text": "What does dropout do during training?", "options": ["Removes low-importance features", "Randomly deactivates neurons", "Reduces learning rate", "Clips gradients"], "correct_index": 1, "sub_topic": "Regularisation"},
-    {"id": "ml_07", "text": "L2 regularisation adds which term to the loss function?", "options": ["Sum of absolute weights", "Sum of squared weights", "Max weight value", "Mean weight value"], "correct_index": 1, "sub_topic": "Regularisation"},
-    {"id": "ml_08", "text": "What is the key innovation of the Transformer architecture?", "options": ["Recurrent connections", "Self-attention mechanism", "Convolutional filters", "Residual connections"], "correct_index": 1, "sub_topic": "NLP"},
-    {"id": "ml_09", "text": "What does fine-tuning a pre-trained model involve?", "options": ["Training from scratch on new data", "Freezing all layers", "Updating weights on a task-specific dataset", "Removing the output layer"], "correct_index": 2, "sub_topic": "NLP"},
-    {"id": "ml_10", "text": "Which format is commonly used to export ML models for cross-platform serving?", "options": ["CSV", "ONNX", "JSON", "XML"], "correct_index": 1, "sub_topic": "Model Deployment"}
+    {
+      "id": "ml_01",
+      "text": "What problem does Batch Normalisation solve?",
+      "options": [
+        "Overfitting",
+        "Internal covariate shift",
+        "Vanishing gradients only",
+        "Data imbalance"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Deep Learning"
+    },
+    {
+      "id": "ml_02",
+      "text": "Which architecture is best suited for sequential data?",
+      "options": [
+        "CNN",
+        "GAN",
+        "LSTM",
+        "Autoencoder"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Deep Learning"
+    },
+    {
+      "id": "ml_03",
+      "text": "What is the role of the discriminator in a GAN?",
+      "options": [
+        "Generate fake data",
+        "Classify real vs. fake data",
+        "Encode input features",
+        "Reduce dimensionality"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Deep Learning"
+    },
+    {
+      "id": "ml_04",
+      "text": "What does the learning rate control in gradient descent?",
+      "options": [
+        "Number of epochs",
+        "Step size during weight updates",
+        "Batch size",
+        "Number of layers"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Optimisation"
+    },
+    {
+      "id": "ml_05",
+      "text": "Which optimiser adapts the learning rate per parameter?",
+      "options": [
+        "SGD",
+        "Momentum",
+        "Adam",
+        "Perceptron"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Optimisation"
+    },
+    {
+      "id": "ml_06",
+      "text": "What does dropout do during training?",
+      "options": [
+        "Removes low-importance features",
+        "Randomly deactivates neurons",
+        "Reduces learning rate",
+        "Clips gradients"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Regularisation"
+    },
+    {
+      "id": "ml_07",
+      "text": "L2 regularisation adds which term to the loss function?",
+      "options": [
+        "Sum of absolute weights",
+        "Sum of squared weights",
+        "Max weight value",
+        "Mean weight value"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Regularisation"
+    },
+    {
+      "id": "ml_08",
+      "text": "What is the key innovation of the Transformer architecture?",
+      "options": [
+        "Recurrent connections",
+        "Self-attention mechanism",
+        "Convolutional filters",
+        "Residual connections"
+      ],
+      "correct_index": 1,
+      "sub_topic": "NLP"
+    },
+    {
+      "id": "ml_09",
+      "text": "What does fine-tuning a pre-trained model involve?",
+      "options": [
+        "Training from scratch on new data",
+        "Freezing all layers",
+        "Updating weights on a task-specific dataset",
+        "Removing the output layer"
+      ],
+      "correct_index": 2,
+      "sub_topic": "NLP"
+    },
+    {
+      "id": "ml_10",
+      "text": "Which format is commonly used to export ML models for cross-platform serving?",
+      "options": [
+        "CSV",
+        "ONNX",
+        "JSON",
+        "XML"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Model Deployment"
+    }
   ],
   "Data Analyst": [
-    {"id": "da_01", "text": "Which SQL clause is used to filter results after aggregation?", "options": ["WHERE", "HAVING", "GROUP BY", "ORDER BY"], "correct_index": 1, "sub_topic": "SQL"},
-    {"id": "da_02", "text": "What does a LEFT JOIN return?", "options": ["Only matching rows from both tables", "All rows from the left table and matching rows from the right", "All rows from both tables", "Only rows from the right table"], "correct_index": 1, "sub_topic": "SQL"},
-    {"id": "da_03", "text": "Which window function assigns a unique rank with no gaps?", "options": ["RANK()", "ROW_NUMBER()", "DENSE_RANK()", "NTILE()"], "correct_index": 2, "sub_topic": "SQL"},
-    {"id": "da_04", "text": "Which chart type is best for showing distribution of a continuous variable?", "options": ["Bar chart", "Pie chart", "Histogram", "Line chart"], "correct_index": 2, "sub_topic": "Data Visualisation"},
-    {"id": "da_05", "text": "What is the purpose of a scatter plot?", "options": ["Show proportions", "Show trends over time", "Show correlation between two variables", "Compare categories"], "correct_index": 2, "sub_topic": "Data Visualisation"},
-    {"id": "da_06", "text": "Which Excel function looks up a value in the first column of a range?", "options": ["HLOOKUP", "INDEX", "VLOOKUP", "MATCH"], "correct_index": 2, "sub_topic": "Excel & BI Tools"},
-    {"id": "da_07", "text": "In Power BI, what is a DAX measure?", "options": ["A type of chart", "A calculated field evaluated in query context", "A data source connector", "A filter panel"], "correct_index": 1, "sub_topic": "Excel & BI Tools"},
-    {"id": "da_08", "text": "What does a correlation coefficient of -0.9 indicate?", "options": ["Weak positive correlation", "No correlation", "Strong negative correlation", "Strong positive correlation"], "correct_index": 2, "sub_topic": "Statistics"},
-    {"id": "da_09", "text": "What is the interquartile range (IQR) used for?", "options": ["Measuring central tendency", "Detecting outliers and spread", "Calculating probability", "Normalising data"], "correct_index": 1, "sub_topic": "Statistics"},
-    {"id": "da_10", "text": "Which strategy is best for handling missing numerical data when the distribution is skewed?", "options": ["Mean imputation", "Median imputation", "Drop all rows", "Replace with zero"], "correct_index": 1, "sub_topic": "Data Cleaning"}
+    {
+      "id": "da_01",
+      "text": "Which SQL clause is used to filter results after aggregation?",
+      "options": [
+        "WHERE",
+        "HAVING",
+        "GROUP BY",
+        "ORDER BY"
+      ],
+      "correct_index": 1,
+      "sub_topic": "SQL"
+    },
+    {
+      "id": "da_02",
+      "text": "What does a LEFT JOIN return?",
+      "options": [
+        "Only matching rows from both tables",
+        "All rows from the left table and matching rows from the right",
+        "All rows from both tables",
+        "Only rows from the right table"
+      ],
+      "correct_index": 1,
+      "sub_topic": "SQL"
+    },
+    {
+      "id": "da_03",
+      "text": "Which window function assigns a unique rank with no gaps?",
+      "options": [
+        "RANK()",
+        "ROW_NUMBER()",
+        "DENSE_RANK()",
+        "NTILE()"
+      ],
+      "correct_index": 2,
+      "sub_topic": "SQL"
+    },
+    {
+      "id": "da_04",
+      "text": "Which chart type is best for showing distribution of a continuous variable?",
+      "options": [
+        "Bar chart",
+        "Pie chart",
+        "Histogram",
+        "Line chart"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Data Visualisation"
+    },
+    {
+      "id": "da_05",
+      "text": "What is the purpose of a scatter plot?",
+      "options": [
+        "Show proportions",
+        "Show trends over time",
+        "Show correlation between two variables",
+        "Compare categories"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Data Visualisation"
+    },
+    {
+      "id": "da_06",
+      "text": "Which Excel function looks up a value in the first column of a range?",
+      "options": [
+        "HLOOKUP",
+        "INDEX",
+        "VLOOKUP",
+        "MATCH"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Excel & BI Tools"
+    },
+    {
+      "id": "da_07",
+      "text": "In Power BI, what is a DAX measure?",
+      "options": [
+        "A type of chart",
+        "A calculated field evaluated in query context",
+        "A data source connector",
+        "A filter panel"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Excel & BI Tools"
+    },
+    {
+      "id": "da_08",
+      "text": "What does a correlation coefficient of -0.9 indicate?",
+      "options": [
+        "Weak positive correlation",
+        "No correlation",
+        "Strong negative correlation",
+        "Strong positive correlation"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Statistics"
+    },
+    {
+      "id": "da_09",
+      "text": "What is the interquartile range (IQR) used for?",
+      "options": [
+        "Measuring central tendency",
+        "Detecting outliers and spread",
+        "Calculating probability",
+        "Normalising data"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Statistics"
+    },
+    {
+      "id": "da_10",
+      "text": "Which strategy is best for handling missing numerical data when the distribution is skewed?",
+      "options": [
+        "Mean imputation",
+        "Median imputation",
+        "Drop all rows",
+        "Replace with zero"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Data Cleaning"
+    }
   ],
   "Full Stack Developer": [
-    {"id": "fs_01", "text": "What is the virtual DOM in React?", "options": ["A browser API", "A lightweight in-memory representation of the real DOM", "A CSS rendering engine", "A server-side template"], "correct_index": 1, "sub_topic": "Frontend"},
-    {"id": "fs_02", "text": "Which React hook runs a side effect after every render?", "options": ["useState", "useRef", "useEffect", "useMemo"], "correct_index": 2, "sub_topic": "Frontend"},
-    {"id": "fs_03", "text": "What does the CSS property 'position: sticky' do?", "options": ["Fixes element relative to viewport always", "Positions element relative to nearest scrolling ancestor until threshold", "Removes element from document flow", "Aligns element to grid"], "correct_index": 1, "sub_topic": "Frontend"},
-    {"id": "fs_04", "text": "Which HTTP status code indicates a resource was successfully created?", "options": ["200", "204", "201", "301"], "correct_index": 2, "sub_topic": "Backend"},
-    {"id": "fs_05", "text": "What is middleware in Express.js?", "options": ["A database connector", "A function that has access to req, res, and next", "A routing algorithm", "A template engine"], "correct_index": 1, "sub_topic": "Backend"},
-    {"id": "fs_06", "text": "What is the difference between SQL and NoSQL databases?", "options": ["SQL is faster", "SQL uses structured schemas; NoSQL is schema-flexible", "NoSQL supports transactions; SQL does not", "They are identical"], "correct_index": 1, "sub_topic": "Databases"},
-    {"id": "fs_07", "text": "What does an index do in a database?", "options": ["Encrypts data", "Speeds up query lookups at the cost of write performance", "Backs up data", "Normalises tables"], "correct_index": 1, "sub_topic": "Databases"},
-    {"id": "fs_08", "text": "What distinguishes REST from GraphQL?", "options": ["REST uses a single endpoint; GraphQL uses multiple", "GraphQL lets clients request exactly the data they need", "REST is faster in all cases", "GraphQL only works with NoSQL"], "correct_index": 1, "sub_topic": "APIs & Architecture"},
-    {"id": "fs_09", "text": "What is CORS and why is it needed?", "options": ["A caching strategy", "A browser security mechanism controlling cross-origin requests", "A load balancing technique", "An authentication protocol"], "correct_index": 1, "sub_topic": "APIs & Architecture"},
-    {"id": "fs_10", "text": "What is the purpose of a .env file in a web project?", "options": ["Store compiled assets", "Store environment-specific configuration and secrets", "Define CSS variables", "Configure the build tool"], "correct_index": 1, "sub_topic": "DevOps & Tooling"}
+    {
+      "id": "fs_01",
+      "text": "What is the virtual DOM in React?",
+      "options": [
+        "A browser API",
+        "A lightweight in-memory representation of the real DOM",
+        "A CSS rendering engine",
+        "A server-side template"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Frontend"
+    },
+    {
+      "id": "fs_02",
+      "text": "Which React hook runs a side effect after every render?",
+      "options": [
+        "useState",
+        "useRef",
+        "useEffect",
+        "useMemo"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Frontend"
+    },
+    {
+      "id": "fs_03",
+      "text": "What does the CSS property 'position: sticky' do?",
+      "options": [
+        "Fixes element relative to viewport always",
+        "Positions element relative to nearest scrolling ancestor until threshold",
+        "Removes element from document flow",
+        "Aligns element to grid"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Frontend"
+    },
+    {
+      "id": "fs_04",
+      "text": "Which HTTP status code indicates a resource was successfully created?",
+      "options": [
+        "200",
+        "204",
+        "201",
+        "301"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Backend"
+    },
+    {
+      "id": "fs_05",
+      "text": "What is middleware in Express.js?",
+      "options": [
+        "A database connector",
+        "A function that has access to req, res, and next",
+        "A routing algorithm",
+        "A template engine"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Backend"
+    },
+    {
+      "id": "fs_06",
+      "text": "What is the difference between SQL and NoSQL databases?",
+      "options": [
+        "SQL is faster",
+        "SQL uses structured schemas; NoSQL is schema-flexible",
+        "NoSQL supports transactions; SQL does not",
+        "They are identical"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Databases"
+    },
+    {
+      "id": "fs_07",
+      "text": "What does an index do in a database?",
+      "options": [
+        "Encrypts data",
+        "Speeds up query lookups at the cost of write performance",
+        "Backs up data",
+        "Normalises tables"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Databases"
+    },
+    {
+      "id": "fs_08",
+      "text": "What distinguishes REST from GraphQL?",
+      "options": [
+        "REST uses a single endpoint; GraphQL uses multiple",
+        "GraphQL lets clients request exactly the data they need",
+        "REST is faster in all cases",
+        "GraphQL only works with NoSQL"
+      ],
+      "correct_index": 1,
+      "sub_topic": "APIs & Architecture"
+    },
+    {
+      "id": "fs_09",
+      "text": "What is CORS and why is it needed?",
+      "options": [
+        "A caching strategy",
+        "A browser security mechanism controlling cross-origin requests",
+        "A load balancing technique",
+        "An authentication protocol"
+      ],
+      "correct_index": 1,
+      "sub_topic": "APIs & Architecture"
+    },
+    {
+      "id": "fs_10",
+      "text": "What is the purpose of a .env file in a web project?",
+      "options": [
+        "Store compiled assets",
+        "Store environment-specific configuration and secrets",
+        "Define CSS variables",
+        "Configure the build tool"
+      ],
+      "correct_index": 1,
+      "sub_topic": "DevOps & Tooling"
+    }
   ],
   "Software Engineer": [
-    {"id": "se_01", "text": "What is the time complexity of searching in a balanced BST?", "options": ["O(1)", "O(n)", "O(log n)", "O(n²)"], "correct_index": 2, "sub_topic": "Data Structures"},
-    {"id": "se_02", "text": "Which data structure is used to implement a priority queue efficiently?", "options": ["Stack", "Linked List", "Heap", "Hash Map"], "correct_index": 2, "sub_topic": "Data Structures"},
-    {"id": "se_03", "text": "What is the worst-case time complexity of QuickSort?", "options": ["O(n log n)", "O(n)", "O(n²)", "O(log n)"], "correct_index": 2, "sub_topic": "Algorithms"},
-    {"id": "se_04", "text": "Which algorithm finds the shortest path in an unweighted graph?", "options": ["DFS", "Dijkstra", "BFS", "Bellman-Ford"], "correct_index": 2, "sub_topic": "Algorithms"},
-    {"id": "se_05", "text": "What is the Liskov Substitution Principle?", "options": ["Classes should have one responsibility", "Subtypes must be substitutable for their base types", "Depend on abstractions, not concretions", "Open for extension, closed for modification"], "correct_index": 1, "sub_topic": "OOP"},
-    {"id": "se_06", "text": "Which design pattern ensures only one instance of a class exists?", "options": ["Factory", "Observer", "Singleton", "Decorator"], "correct_index": 2, "sub_topic": "OOP"},
-    {"id": "se_07", "text": "What is eventual consistency in distributed systems?", "options": ["All nodes are always in sync", "Nodes will converge to the same state given enough time", "Transactions are atomic across nodes", "Data is replicated synchronously"], "correct_index": 1, "sub_topic": "System Design"},
-    {"id": "se_08", "text": "What does horizontal scaling mean?", "options": ["Adding more CPU/RAM to one server", "Adding more servers to distribute load", "Optimising database queries", "Compressing data"], "correct_index": 1, "sub_topic": "System Design"},
-    {"id": "se_09", "text": "What is the difference between unit and integration testing?", "options": ["Unit tests are slower", "Unit tests test individual components; integration tests test interactions", "Integration tests use mocks", "They are the same"], "correct_index": 1, "sub_topic": "Testing"},
-    {"id": "se_10", "text": "What is Test-Driven Development (TDD)?", "options": ["Writing tests after code", "Writing tests before writing the implementation", "Only testing edge cases", "Automated deployment testing"], "correct_index": 1, "sub_topic": "Testing"}
+    {
+      "id": "se_01",
+      "text": "What is the time complexity of searching in a balanced BST?",
+      "options": [
+        "O(1)",
+        "O(n)",
+        "O(log n)",
+        "O(n\u00b2)"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Data Structures"
+    },
+    {
+      "id": "se_02",
+      "text": "Which data structure is used to implement a priority queue efficiently?",
+      "options": [
+        "Stack",
+        "Linked List",
+        "Heap",
+        "Hash Map"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Data Structures"
+    },
+    {
+      "id": "se_03",
+      "text": "What is the worst-case time complexity of QuickSort?",
+      "options": [
+        "O(n log n)",
+        "O(n)",
+        "O(n\u00b2)",
+        "O(log n)"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Algorithms"
+    },
+    {
+      "id": "se_04",
+      "text": "Which algorithm finds the shortest path in an unweighted graph?",
+      "options": [
+        "DFS",
+        "Dijkstra",
+        "BFS",
+        "Bellman-Ford"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Algorithms"
+    },
+    {
+      "id": "se_05",
+      "text": "What is the Liskov Substitution Principle?",
+      "options": [
+        "Classes should have one responsibility",
+        "Subtypes must be substitutable for their base types",
+        "Depend on abstractions, not concretions",
+        "Open for extension, closed for modification"
+      ],
+      "correct_index": 1,
+      "sub_topic": "OOP"
+    },
+    {
+      "id": "se_06",
+      "text": "Which design pattern ensures only one instance of a class exists?",
+      "options": [
+        "Factory",
+        "Observer",
+        "Singleton",
+        "Decorator"
+      ],
+      "correct_index": 2,
+      "sub_topic": "OOP"
+    },
+    {
+      "id": "se_07",
+      "text": "What is eventual consistency in distributed systems?",
+      "options": [
+        "All nodes are always in sync",
+        "Nodes will converge to the same state given enough time",
+        "Transactions are atomic across nodes",
+        "Data is replicated synchronously"
+      ],
+      "correct_index": 1,
+      "sub_topic": "System Design"
+    },
+    {
+      "id": "se_08",
+      "text": "What does horizontal scaling mean?",
+      "options": [
+        "Adding more CPU/RAM to one server",
+        "Adding more servers to distribute load",
+        "Optimising database queries",
+        "Compressing data"
+      ],
+      "correct_index": 1,
+      "sub_topic": "System Design"
+    },
+    {
+      "id": "se_09",
+      "text": "What is the difference between unit and integration testing?",
+      "options": [
+        "Unit tests are slower",
+        "Unit tests test individual components; integration tests test interactions",
+        "Integration tests use mocks",
+        "They are the same"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Testing"
+    },
+    {
+      "id": "se_10",
+      "text": "What is Test-Driven Development (TDD)?",
+      "options": [
+        "Writing tests after code",
+        "Writing tests before writing the implementation",
+        "Only testing edge cases",
+        "Automated deployment testing"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Testing"
+    }
   ],
   "DevOps Engineer": [
-    {"id": "do_01", "text": "What is the difference between a Docker image and a container?", "options": ["They are the same", "An image is a running instance; a container is a blueprint", "An image is a blueprint; a container is a running instance", "Containers are stored on disk; images run in memory"], "correct_index": 2, "sub_topic": "Containers"},
-    {"id": "do_02", "text": "What does the ENTRYPOINT instruction do in a Dockerfile?", "options": ["Sets environment variables", "Defines the default executable for the container", "Copies files into the image", "Exposes a network port"], "correct_index": 1, "sub_topic": "Containers"},
-    {"id": "do_03", "text": "What is a Kubernetes Pod?", "options": ["A cluster of nodes", "The smallest deployable unit containing one or more containers", "A load balancer", "A persistent volume"], "correct_index": 1, "sub_topic": "Orchestration"},
-    {"id": "do_04", "text": "What does a Kubernetes Service do?", "options": ["Stores configuration data", "Provides stable network access to a set of Pods", "Schedules Pods on nodes", "Manages secrets"], "correct_index": 1, "sub_topic": "Orchestration"},
-    {"id": "do_05", "text": "What is the difference between Continuous Delivery and Continuous Deployment?", "options": ["They are identical", "Continuous Delivery requires manual approval before production; Deployment is fully automated", "Continuous Deployment requires manual approval", "Continuous Delivery skips testing"], "correct_index": 1, "sub_topic": "CI/CD"},
-    {"id": "do_06", "text": "What is a pipeline artifact in CI/CD?", "options": ["A failed build log", "A file or directory produced by a build step for use in later stages", "A deployment environment", "A test report only"], "correct_index": 1, "sub_topic": "CI/CD"},
-    {"id": "do_07", "text": "What is idempotency in the context of IaC tools like Terraform?", "options": ["Running the same config multiple times produces different results", "Running the same config multiple times always produces the same result", "Resources are deleted after each run", "Only applies to cloud providers"], "correct_index": 1, "sub_topic": "Infrastructure as Code"},
-    {"id": "do_08", "text": "What does 'terraform plan' do?", "options": ["Applies infrastructure changes", "Destroys all resources", "Shows a preview of changes without applying them", "Initialises the working directory"], "correct_index": 2, "sub_topic": "Infrastructure as Code"},
-    {"id": "do_09", "text": "What is the role of Prometheus in a monitoring stack?", "options": ["Visualises metrics dashboards", "Scrapes and stores time-series metrics", "Sends alerts via email", "Manages log aggregation"], "correct_index": 1, "sub_topic": "Monitoring"},
-    {"id": "do_10", "text": "What is a Grafana dashboard used for?", "options": ["Running CI pipelines", "Visualising metrics from data sources like Prometheus", "Managing Kubernetes clusters", "Storing application logs"], "correct_index": 1, "sub_topic": "Monitoring"}
+    {
+      "id": "do_01",
+      "text": "What is the difference between a Docker image and a container?",
+      "options": [
+        "They are the same",
+        "An image is a running instance; a container is a blueprint",
+        "An image is a blueprint; a container is a running instance",
+        "Containers are stored on disk; images run in memory"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Containers"
+    },
+    {
+      "id": "do_02",
+      "text": "What does the ENTRYPOINT instruction do in a Dockerfile?",
+      "options": [
+        "Sets environment variables",
+        "Defines the default executable for the container",
+        "Copies files into the image",
+        "Exposes a network port"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Containers"
+    },
+    {
+      "id": "do_03",
+      "text": "What is a Kubernetes Pod?",
+      "options": [
+        "A cluster of nodes",
+        "The smallest deployable unit containing one or more containers",
+        "A load balancer",
+        "A persistent volume"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Orchestration"
+    },
+    {
+      "id": "do_04",
+      "text": "What does a Kubernetes Service do?",
+      "options": [
+        "Stores configuration data",
+        "Provides stable network access to a set of Pods",
+        "Schedules Pods on nodes",
+        "Manages secrets"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Orchestration"
+    },
+    {
+      "id": "do_05",
+      "text": "What is the difference between Continuous Delivery and Continuous Deployment?",
+      "options": [
+        "They are identical",
+        "Continuous Delivery requires manual approval before production; Deployment is fully automated",
+        "Continuous Deployment requires manual approval",
+        "Continuous Delivery skips testing"
+      ],
+      "correct_index": 1,
+      "sub_topic": "CI/CD"
+    },
+    {
+      "id": "do_06",
+      "text": "What is a pipeline artifact in CI/CD?",
+      "options": [
+        "A failed build log",
+        "A file or directory produced by a build step for use in later stages",
+        "A deployment environment",
+        "A test report only"
+      ],
+      "correct_index": 1,
+      "sub_topic": "CI/CD"
+    },
+    {
+      "id": "do_07",
+      "text": "What is idempotency in the context of IaC tools like Terraform?",
+      "options": [
+        "Running the same config multiple times produces different results",
+        "Running the same config multiple times always produces the same result",
+        "Resources are deleted after each run",
+        "Only applies to cloud providers"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Infrastructure as Code"
+    },
+    {
+      "id": "do_08",
+      "text": "What does 'terraform plan' do?",
+      "options": [
+        "Applies infrastructure changes",
+        "Destroys all resources",
+        "Shows a preview of changes without applying them",
+        "Initialises the working directory"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Infrastructure as Code"
+    },
+    {
+      "id": "do_09",
+      "text": "What is the role of Prometheus in a monitoring stack?",
+      "options": [
+        "Visualises metrics dashboards",
+        "Scrapes and stores time-series metrics",
+        "Sends alerts via email",
+        "Manages log aggregation"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Monitoring"
+    },
+    {
+      "id": "do_10",
+      "text": "What is a Grafana dashboard used for?",
+      "options": [
+        "Running CI pipelines",
+        "Visualising metrics from data sources like Prometheus",
+        "Managing Kubernetes clusters",
+        "Storing application logs"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Monitoring"
+    }
   ],
   "Cybersecurity Analyst": [
-    {"id": "cy_01", "text": "What is the purpose of a DMZ in network architecture?", "options": ["Speed up internal traffic", "Isolate public-facing services from the internal network", "Encrypt all traffic", "Replace a firewall"], "correct_index": 1, "sub_topic": "Network Security"},
-    {"id": "cy_02", "text": "Which protocol provides secure remote login over an encrypted channel?", "options": ["Telnet", "FTP", "SSH", "HTTP"], "correct_index": 2, "sub_topic": "Network Security"},
-    {"id": "cy_03", "text": "What is the key difference between symmetric and asymmetric encryption?", "options": ["Symmetric is slower", "Symmetric uses one key; asymmetric uses a public/private key pair", "Asymmetric uses one key; symmetric uses two", "They are the same"], "correct_index": 1, "sub_topic": "Cryptography"},
-    {"id": "cy_04", "text": "What is a digital certificate used for?", "options": ["Encrypting hard drives", "Binding a public key to an identity, verified by a CA", "Storing passwords", "Generating random numbers"], "correct_index": 1, "sub_topic": "Cryptography"},
-    {"id": "cy_05", "text": "What is a SQL injection attack?", "options": ["Flooding a server with requests", "Inserting malicious SQL code into an input field to manipulate a database", "Intercepting network traffic", "Cracking password hashes"], "correct_index": 1, "sub_topic": "Threats & Attacks"},
-    {"id": "cy_06", "text": "What is a Man-in-the-Middle (MitM) attack?", "options": ["Attacker secretly intercepts and relays communication between two parties", "Attacker floods a server", "Attacker guesses passwords", "Attacker injects scripts into web pages"], "correct_index": 0, "sub_topic": "Threats & Attacks"},
-    {"id": "cy_07", "text": "What is the first step in the NIST incident response lifecycle?", "options": ["Containment", "Eradication", "Preparation", "Recovery"], "correct_index": 2, "sub_topic": "Incident Response"},
-    {"id": "cy_08", "text": "What is forensic imaging in incident response?", "options": ["Taking screenshots of the attack", "Creating a bit-for-bit copy of storage media for analysis", "Patching vulnerabilities", "Notifying stakeholders"], "correct_index": 1, "sub_topic": "Incident Response"},
-    {"id": "cy_09", "text": "What does the CIA triad stand for in information security?", "options": ["Control, Integrity, Access", "Confidentiality, Integrity, Availability", "Compliance, Identity, Authorisation", "Cryptography, Infrastructure, Audit"], "correct_index": 1, "sub_topic": "Compliance & Frameworks"},
-    {"id": "cy_10", "text": "What is the purpose of penetration testing?", "options": ["Monitor network traffic continuously", "Simulate attacks to identify vulnerabilities before malicious actors do", "Encrypt sensitive data", "Manage user access rights"], "correct_index": 1, "sub_topic": "Compliance & Frameworks"}
+    {
+      "id": "cy_01",
+      "text": "What is the purpose of a DMZ in network architecture?",
+      "options": [
+        "Speed up internal traffic",
+        "Isolate public-facing services from the internal network",
+        "Encrypt all traffic",
+        "Replace a firewall"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Network Security"
+    },
+    {
+      "id": "cy_02",
+      "text": "Which protocol provides secure remote login over an encrypted channel?",
+      "options": [
+        "Telnet",
+        "FTP",
+        "SSH",
+        "HTTP"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Network Security"
+    },
+    {
+      "id": "cy_03",
+      "text": "What is the key difference between symmetric and asymmetric encryption?",
+      "options": [
+        "Symmetric is slower",
+        "Symmetric uses one key; asymmetric uses a public/private key pair",
+        "Asymmetric uses one key; symmetric uses two",
+        "They are the same"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Cryptography"
+    },
+    {
+      "id": "cy_04",
+      "text": "What is a digital certificate used for?",
+      "options": [
+        "Encrypting hard drives",
+        "Binding a public key to an identity, verified by a CA",
+        "Storing passwords",
+        "Generating random numbers"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Cryptography"
+    },
+    {
+      "id": "cy_05",
+      "text": "What is a SQL injection attack?",
+      "options": [
+        "Flooding a server with requests",
+        "Inserting malicious SQL code into an input field to manipulate a database",
+        "Intercepting network traffic",
+        "Cracking password hashes"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Threats & Attacks"
+    },
+    {
+      "id": "cy_06",
+      "text": "What is a Man-in-the-Middle (MitM) attack?",
+      "options": [
+        "Attacker secretly intercepts and relays communication between two parties",
+        "Attacker floods a server",
+        "Attacker guesses passwords",
+        "Attacker injects scripts into web pages"
+      ],
+      "correct_index": 0,
+      "sub_topic": "Threats & Attacks"
+    },
+    {
+      "id": "cy_07",
+      "text": "What is the first step in the NIST incident response lifecycle?",
+      "options": [
+        "Containment",
+        "Eradication",
+        "Preparation",
+        "Recovery"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Incident Response"
+    },
+    {
+      "id": "cy_08",
+      "text": "What is forensic imaging in incident response?",
+      "options": [
+        "Taking screenshots of the attack",
+        "Creating a bit-for-bit copy of storage media for analysis",
+        "Patching vulnerabilities",
+        "Notifying stakeholders"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Incident Response"
+    },
+    {
+      "id": "cy_09",
+      "text": "What does the CIA triad stand for in information security?",
+      "options": [
+        "Control, Integrity, Access",
+        "Confidentiality, Integrity, Availability",
+        "Compliance, Identity, Authorisation",
+        "Cryptography, Infrastructure, Audit"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Compliance & Frameworks"
+    },
+    {
+      "id": "cy_10",
+      "text": "What is the purpose of penetration testing?",
+      "options": [
+        "Monitor network traffic continuously",
+        "Simulate attacks to identify vulnerabilities before malicious actors do",
+        "Encrypt sensitive data",
+        "Manage user access rights"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Compliance & Frameworks"
+    }
   ],
   "UI/UX Designer": [
-    {"id": "ux_01", "text": "What is the purpose of a user persona?", "options": ["Define colour palettes", "Represent a fictional but research-based archetype of a target user", "Create wireframes", "Write user stories"], "correct_index": 1, "sub_topic": "UX Research"},
-    {"id": "ux_02", "text": "What is a usability test?", "options": ["A/B testing two colour schemes", "Observing real users attempting tasks to identify pain points", "Reviewing code quality", "Checking design consistency"], "correct_index": 1, "sub_topic": "UX Research"},
-    {"id": "ux_03", "text": "What is Fitts's Law in UX design?", "options": ["Users read left to right", "Time to acquire a target depends on its size and distance", "Menus should have no more than 7 items", "Contrast improves readability"], "correct_index": 1, "sub_topic": "Interaction Design"},
-    {"id": "ux_04", "text": "What is an affordance in UI design?", "options": ["A colour contrast ratio", "A visual cue that suggests how an element can be interacted with", "A loading animation", "A navigation pattern"], "correct_index": 1, "sub_topic": "Interaction Design"},
-    {"id": "ux_05", "text": "What is the 60-30-10 rule in colour theory?", "options": ["Font size ratio", "Distribute colours as 60% dominant, 30% secondary, 10% accent", "Grid column ratio", "Spacing scale"], "correct_index": 1, "sub_topic": "Visual Design"},
-    {"id": "ux_06", "text": "What is visual hierarchy in UI design?", "options": ["Ordering menu items alphabetically", "Arranging elements to guide the user's eye to the most important content first", "Using only one font", "Aligning all elements to the left"], "correct_index": 1, "sub_topic": "Visual Design"},
-    {"id": "ux_07", "text": "What is the difference between a wireframe and a prototype?", "options": ["They are the same", "A wireframe is a static layout; a prototype is interactive", "A prototype is static; a wireframe is interactive", "Wireframes are high-fidelity"], "correct_index": 1, "sub_topic": "Prototyping"},
-    {"id": "ux_08", "text": "What is a high-fidelity prototype?", "options": ["A rough sketch on paper", "A detailed, interactive mockup closely resembling the final product", "A text-only wireframe", "A component library"], "correct_index": 1, "sub_topic": "Prototyping"},
-    {"id": "ux_09", "text": "What WCAG contrast ratio is required for normal text at AA level?", "options": ["2:1", "3:1", "4.5:1", "7:1"], "correct_index": 2, "sub_topic": "Accessibility"},
-    {"id": "ux_10", "text": "What is the purpose of ARIA labels in web design?", "options": ["Style elements with CSS", "Provide accessible names for elements to screen readers", "Animate UI components", "Define grid layouts"], "correct_index": 1, "sub_topic": "Accessibility"}
+    {
+      "id": "ux_01",
+      "text": "What is the purpose of a user persona?",
+      "options": [
+        "Define colour palettes",
+        "Represent a fictional but research-based archetype of a target user",
+        "Create wireframes",
+        "Write user stories"
+      ],
+      "correct_index": 1,
+      "sub_topic": "UX Research"
+    },
+    {
+      "id": "ux_02",
+      "text": "What is a usability test?",
+      "options": [
+        "A/B testing two colour schemes",
+        "Observing real users attempting tasks to identify pain points",
+        "Reviewing code quality",
+        "Checking design consistency"
+      ],
+      "correct_index": 1,
+      "sub_topic": "UX Research"
+    },
+    {
+      "id": "ux_03",
+      "text": "What is Fitts's Law in UX design?",
+      "options": [
+        "Users read left to right",
+        "Time to acquire a target depends on its size and distance",
+        "Menus should have no more than 7 items",
+        "Contrast improves readability"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Interaction Design"
+    },
+    {
+      "id": "ux_04",
+      "text": "What is an affordance in UI design?",
+      "options": [
+        "A colour contrast ratio",
+        "A visual cue that suggests how an element can be interacted with",
+        "A loading animation",
+        "A navigation pattern"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Interaction Design"
+    },
+    {
+      "id": "ux_05",
+      "text": "What is the 60-30-10 rule in colour theory?",
+      "options": [
+        "Font size ratio",
+        "Distribute colours as 60% dominant, 30% secondary, 10% accent",
+        "Grid column ratio",
+        "Spacing scale"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Visual Design"
+    },
+    {
+      "id": "ux_06",
+      "text": "What is visual hierarchy in UI design?",
+      "options": [
+        "Ordering menu items alphabetically",
+        "Arranging elements to guide the user's eye to the most important content first",
+        "Using only one font",
+        "Aligning all elements to the left"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Visual Design"
+    },
+    {
+      "id": "ux_07",
+      "text": "What is the difference between a wireframe and a prototype?",
+      "options": [
+        "They are the same",
+        "A wireframe is a static layout; a prototype is interactive",
+        "A prototype is static; a wireframe is interactive",
+        "Wireframes are high-fidelity"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Prototyping"
+    },
+    {
+      "id": "ux_08",
+      "text": "What is a high-fidelity prototype?",
+      "options": [
+        "A rough sketch on paper",
+        "A detailed, interactive mockup closely resembling the final product",
+        "A text-only wireframe",
+        "A component library"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Prototyping"
+    },
+    {
+      "id": "ux_09",
+      "text": "What WCAG contrast ratio is required for normal text at AA level?",
+      "options": [
+        "2:1",
+        "3:1",
+        "4.5:1",
+        "7:1"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Accessibility"
+    },
+    {
+      "id": "ux_10",
+      "text": "What is the purpose of ARIA labels in web design?",
+      "options": [
+        "Style elements with CSS",
+        "Provide accessible names for elements to screen readers",
+        "Animate UI components",
+        "Define grid layouts"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Accessibility"
+    }
   ],
   "Backend Developer": [
-    {"id": "be_01", "text": "What does idempotency mean for HTTP methods?", "options": ["The request always returns 200", "Making the same request multiple times produces the same result", "The request is cached", "The request requires authentication"], "correct_index": 1, "sub_topic": "API Design"},
-    {"id": "be_02", "text": "Which HTTP method is idempotent but NOT safe?", "options": ["GET", "HEAD", "PUT", "POST"], "correct_index": 2, "sub_topic": "API Design"},
-    {"id": "be_03", "text": "What is database normalisation?", "options": ["Speeding up queries with indexes", "Organising data to reduce redundancy and improve integrity", "Encrypting database columns", "Backing up data regularly"], "correct_index": 1, "sub_topic": "Databases"},
-    {"id": "be_04", "text": "What is the N+1 query problem in ORMs?", "options": ["Running one query that returns N+1 columns", "Executing one query to fetch a list, then N additional queries for each item", "A database connection limit", "A transaction isolation issue"], "correct_index": 1, "sub_topic": "Databases"},
-    {"id": "be_05", "text": "What is a cache eviction policy?", "options": ["A rule for encrypting cached data", "A strategy for deciding which items to remove when the cache is full", "A method for invalidating all cache entries", "A database backup strategy"], "correct_index": 1, "sub_topic": "Caching"},
-    {"id": "be_06", "text": "What does LRU stand for in caching?", "options": ["Last Recently Used", "Least Recently Used", "Longest Running Unit", "Least Redundant Update"], "correct_index": 1, "sub_topic": "Caching"},
-    {"id": "be_07", "text": "What is the purpose of a JWT refresh token?", "options": ["Encrypt the access token", "Obtain a new access token without re-authenticating", "Store user permissions", "Sign API requests"], "correct_index": 1, "sub_topic": "Authentication & Security"},
-    {"id": "be_08", "text": "What is bcrypt used for?", "options": ["Encrypting API responses", "Securely hashing passwords with a salt", "Generating JWT tokens", "Compressing database records"], "correct_index": 1, "sub_topic": "Authentication & Security"},
-    {"id": "be_09", "text": "What is a race condition?", "options": ["A performance benchmark", "A bug where output depends on unpredictable timing of concurrent operations", "A database deadlock", "A network timeout"], "correct_index": 1, "sub_topic": "Concurrency"},
-    {"id": "be_10", "text": "What is the purpose of a message queue like Redis or RabbitMQ?", "options": ["Store user sessions only", "Decouple services and handle async task processing", "Cache database queries", "Manage API rate limiting"], "correct_index": 1, "sub_topic": "Concurrency"}
+    {
+      "id": "be_01",
+      "text": "What does idempotency mean for HTTP methods?",
+      "options": [
+        "The request always returns 200",
+        "Making the same request multiple times produces the same result",
+        "The request is cached",
+        "The request requires authentication"
+      ],
+      "correct_index": 1,
+      "sub_topic": "API Design"
+    },
+    {
+      "id": "be_02",
+      "text": "Which HTTP method is idempotent but NOT safe?",
+      "options": [
+        "GET",
+        "HEAD",
+        "PUT",
+        "POST"
+      ],
+      "correct_index": 2,
+      "sub_topic": "API Design"
+    },
+    {
+      "id": "be_03",
+      "text": "What is database normalisation?",
+      "options": [
+        "Speeding up queries with indexes",
+        "Organising data to reduce redundancy and improve integrity",
+        "Encrypting database columns",
+        "Backing up data regularly"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Databases"
+    },
+    {
+      "id": "be_04",
+      "text": "What is the N+1 query problem in ORMs?",
+      "options": [
+        "Running one query that returns N+1 columns",
+        "Executing one query to fetch a list, then N additional queries for each item",
+        "A database connection limit",
+        "A transaction isolation issue"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Databases"
+    },
+    {
+      "id": "be_05",
+      "text": "What is a cache eviction policy?",
+      "options": [
+        "A rule for encrypting cached data",
+        "A strategy for deciding which items to remove when the cache is full",
+        "A method for invalidating all cache entries",
+        "A database backup strategy"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Caching"
+    },
+    {
+      "id": "be_06",
+      "text": "What does LRU stand for in caching?",
+      "options": [
+        "Last Recently Used",
+        "Least Recently Used",
+        "Longest Running Unit",
+        "Least Redundant Update"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Caching"
+    },
+    {
+      "id": "be_07",
+      "text": "What is the purpose of a JWT refresh token?",
+      "options": [
+        "Encrypt the access token",
+        "Obtain a new access token without re-authenticating",
+        "Store user permissions",
+        "Sign API requests"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Authentication & Security"
+    },
+    {
+      "id": "be_08",
+      "text": "What is bcrypt used for?",
+      "options": [
+        "Encrypting API responses",
+        "Securely hashing passwords with a salt",
+        "Generating JWT tokens",
+        "Compressing database records"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Authentication & Security"
+    },
+    {
+      "id": "be_09",
+      "text": "What is a race condition?",
+      "options": [
+        "A performance benchmark",
+        "A bug where output depends on unpredictable timing of concurrent operations",
+        "A database deadlock",
+        "A network timeout"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Concurrency"
+    },
+    {
+      "id": "be_10",
+      "text": "What is the purpose of a message queue like Redis or RabbitMQ?",
+      "options": [
+        "Store user sessions only",
+        "Decouple services and handle async task processing",
+        "Cache database queries",
+        "Manage API rate limiting"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Concurrency"
+    }
+  ],
+  "QA Automation Engineer": [
+    {
+      "id": "qa_01",
+      "text": "What is the primary purpose of regression testing?",
+      "options": [
+        "Test new features",
+        "Ensure existing functionality still works after changes",
+        "Measure performance",
+        "Test UI design"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Testing Fundamentals"
+    },
+    {
+      "id": "qa_02",
+      "text": "Which Selenium method waits for an element to be clickable?",
+      "options": [
+        "implicitlyWait",
+        "WebDriverWait with ExpectedConditions.elementToBeClickable",
+        "sleep()",
+        "findElement"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Selenium"
+    },
+    {
+      "id": "qa_03",
+      "text": "What does BDD stand for in testing?",
+      "options": [
+        "Bug-Driven Development",
+        "Behaviour-Driven Development",
+        "Build-Deploy-Debug",
+        "Backend Data Design"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Testing Methodologies"
+    },
+    {
+      "id": "qa_04",
+      "text": "Which tool is used for API testing?",
+      "options": [
+        "Selenium",
+        "Postman",
+        "Figma",
+        "Jenkins"
+      ],
+      "correct_index": 1,
+      "sub_topic": "API Testing"
+    },
+    {
+      "id": "qa_05",
+      "text": "What is a test fixture?",
+      "options": [
+        "A broken test",
+        "A fixed set of objects used as a baseline for tests",
+        "A CI/CD pipeline",
+        "A load testing tool"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Testing Fundamentals"
+    },
+    {
+      "id": "qa_06",
+      "text": "Which pytest decorator marks a test as expected to fail?",
+      "options": [
+        "@pytest.mark.skip",
+        "@pytest.mark.xfail",
+        "@pytest.mark.slow",
+        "@pytest.mark.last"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Pytest"
+    },
+    {
+      "id": "qa_07",
+      "text": "What is the Page Object Model (POM) in Selenium?",
+      "options": [
+        "A database pattern",
+        "A design pattern that creates an object repository for web elements",
+        "A CI/CD strategy",
+        "A load testing approach"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Selenium"
+    },
+    {
+      "id": "qa_08",
+      "text": "What does CI/CD stand for?",
+      "options": [
+        "Code Integration / Code Deployment",
+        "Continuous Integration / Continuous Delivery",
+        "Component Interface / Component Design",
+        "None of the above"
+      ],
+      "correct_index": 1,
+      "sub_topic": "CI/CD"
+    },
+    {
+      "id": "qa_09",
+      "text": "Which Cypress command asserts that an element contains specific text?",
+      "options": [
+        ".click()",
+        ".type()",
+        ".should(\"contain\", \"text\")",
+        ".visit()"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Cypress"
+    },
+    {
+      "id": "qa_10",
+      "text": "What is the difference between smoke and sanity testing?",
+      "options": [
+        "They are identical",
+        "Smoke tests broad functionality after a build; sanity tests a specific fix",
+        "Sanity is automated; smoke is manual",
+        "Smoke tests only the UI"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Testing Methodologies"
+    }
+  ],
+  "Cloud Engineer": [
+    {
+      "id": "ce_01",
+      "text": "What does IAM stand for in AWS?",
+      "options": [
+        "Internet Access Management",
+        "Identity and Access Management",
+        "Infrastructure Automation Module",
+        "Integrated API Manager"
+      ],
+      "correct_index": 1,
+      "sub_topic": "AWS"
+    },
+    {
+      "id": "ce_02",
+      "text": "Which AWS service provides serverless compute?",
+      "options": [
+        "EC2",
+        "S3",
+        "Lambda",
+        "RDS"
+      ],
+      "correct_index": 2,
+      "sub_topic": "AWS"
+    },
+    {
+      "id": "ce_03",
+      "text": "What is Infrastructure as Code (IaC)?",
+      "options": [
+        "Writing code inside cloud consoles",
+        "Managing infrastructure through machine-readable config files",
+        "A cloud billing strategy",
+        "A container orchestration tool"
+      ],
+      "correct_index": 1,
+      "sub_topic": "IaC"
+    },
+    {
+      "id": "ce_04",
+      "text": "Which tool is used for IaC with a declarative HCL syntax?",
+      "options": [
+        "Ansible",
+        "Terraform",
+        "Jenkins",
+        "Docker"
+      ],
+      "correct_index": 1,
+      "sub_topic": "IaC"
+    },
+    {
+      "id": "ce_05",
+      "text": "What is a VPC in AWS?",
+      "options": [
+        "Virtual Private Cloud \u2014 an isolated network environment",
+        "A type of EC2 instance",
+        "A serverless function",
+        "A managed database service"
+      ],
+      "correct_index": 0,
+      "sub_topic": "Networking"
+    },
+    {
+      "id": "ce_06",
+      "text": "What does S3 stand for?",
+      "options": [
+        "Simple Storage Service",
+        "Secure Server System",
+        "Scalable SQL Service",
+        "Static Site Service"
+      ],
+      "correct_index": 0,
+      "sub_topic": "AWS"
+    },
+    {
+      "id": "ce_07",
+      "text": "Which cloud model provides the most control over infrastructure?",
+      "options": [
+        "SaaS",
+        "PaaS",
+        "IaaS",
+        "FaaS"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Cloud Concepts"
+    },
+    {
+      "id": "ce_08",
+      "text": "What is auto-scaling in cloud computing?",
+      "options": [
+        "Manually adding servers",
+        "Automatically adjusting compute capacity based on demand",
+        "A backup strategy",
+        "A CDN feature"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Cloud Concepts"
+    },
+    {
+      "id": "ce_09",
+      "text": "Which service is used for DNS management in AWS?",
+      "options": [
+        "CloudFront",
+        "Route 53",
+        "API Gateway",
+        "Elastic Load Balancer"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Networking"
+    },
+    {
+      "id": "ce_10",
+      "text": "What is the purpose of a load balancer?",
+      "options": [
+        "Store static files",
+        "Distribute incoming traffic across multiple servers",
+        "Encrypt data at rest",
+        "Monitor application logs"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Networking"
+    }
+  ],
+  "Mobile App Developer": [
+    {
+      "id": "mob_01",
+      "text": "What is the main advantage of React Native over native development?",
+      "options": [
+        "Better performance always",
+        "Write once, run on both iOS and Android",
+        "Access to all native APIs",
+        "Smaller app size"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Cross-Platform"
+    },
+    {
+      "id": "mob_02",
+      "text": "Which Flutter widget is used for scrollable lists?",
+      "options": [
+        "Container",
+        "ListView",
+        "Stack",
+        "Row"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Flutter"
+    },
+    {
+      "id": "mob_03",
+      "text": "What is the purpose of AsyncStorage in React Native?",
+      "options": [
+        "Network requests",
+        "Persistent key-value storage on device",
+        "State management",
+        "Navigation"
+      ],
+      "correct_index": 1,
+      "sub_topic": "React Native"
+    },
+    {
+      "id": "mob_04",
+      "text": "Which language is used for native iOS development?",
+      "options": [
+        "Kotlin",
+        "Java",
+        "Swift",
+        "Dart"
+      ],
+      "correct_index": 2,
+      "sub_topic": "iOS"
+    },
+    {
+      "id": "mob_05",
+      "text": "What is the Android equivalent of iOS ViewControllers?",
+      "options": [
+        "Fragments",
+        "Activities",
+        "Services",
+        "Intents"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Android"
+    },
+    {
+      "id": "mob_06",
+      "text": "What does APK stand for?",
+      "options": [
+        "Android Package Kit",
+        "Application Programming Key",
+        "Android Process Kernel",
+        "App Package Key"
+      ],
+      "correct_index": 0,
+      "sub_topic": "Android"
+    },
+    {
+      "id": "mob_07",
+      "text": "Which state management solution is commonly used in Flutter?",
+      "options": [
+        "Redux",
+        "MobX",
+        "Provider / Riverpod",
+        "Context API"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Flutter"
+    },
+    {
+      "id": "mob_08",
+      "text": "What is deep linking in mobile apps?",
+      "options": [
+        "Linking to external websites",
+        "Navigating to a specific screen via a URL",
+        "Connecting to a database",
+        "A push notification strategy"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Navigation"
+    },
+    {
+      "id": "mob_09",
+      "text": "Which tool is used to test React Native apps on a physical device without a build?",
+      "options": [
+        "Xcode Simulator",
+        "Expo Go",
+        "Android Studio",
+        "TestFlight"
+      ],
+      "correct_index": 1,
+      "sub_topic": "React Native"
+    },
+    {
+      "id": "mob_10",
+      "text": "What is the purpose of the AndroidManifest.xml file?",
+      "options": [
+        "Store app data",
+        "Declare app components, permissions, and metadata",
+        "Define UI layouts",
+        "Configure build settings"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Android"
+    }
+  ],
+  "Site Reliability Engineer": [
+    {
+      "id": "sre_01",
+      "text": "What is an SLO?",
+      "options": [
+        "Service Level Objective \u2014 a target for service reliability",
+        "A type of server",
+        "A monitoring tool",
+        "A deployment strategy"
+      ],
+      "correct_index": 0,
+      "sub_topic": "SRE Concepts"
+    },
+    {
+      "id": "sre_02",
+      "text": "What is an error budget?",
+      "options": [
+        "The cost of fixing bugs",
+        "The allowed amount of downtime/errors before SLO is breached",
+        "A testing quota",
+        "A CI/CD metric"
+      ],
+      "correct_index": 1,
+      "sub_topic": "SRE Concepts"
+    },
+    {
+      "id": "sre_03",
+      "text": "Which tool is used for metrics collection and alerting in SRE?",
+      "options": [
+        "Figma",
+        "Prometheus",
+        "Postman",
+        "Terraform"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Observability"
+    },
+    {
+      "id": "sre_04",
+      "text": "What does MTTR stand for?",
+      "options": [
+        "Mean Time To Recover",
+        "Maximum Throughput To Route",
+        "Minimum Test Time Required",
+        "Mean Traffic To Route"
+      ],
+      "correct_index": 0,
+      "sub_topic": "Incident Management"
+    },
+    {
+      "id": "sre_05",
+      "text": "What is toil in SRE?",
+      "options": [
+        "Manual, repetitive operational work that scales with service growth",
+        "A type of deployment",
+        "A monitoring alert",
+        "A load testing tool"
+      ],
+      "correct_index": 0,
+      "sub_topic": "SRE Concepts"
+    },
+    {
+      "id": "sre_06",
+      "text": "Which Kubernetes resource ensures a specified number of pod replicas are running?",
+      "options": [
+        "Service",
+        "ConfigMap",
+        "ReplicaSet",
+        "Ingress"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Kubernetes"
+    },
+    {
+      "id": "sre_07",
+      "text": "What is distributed tracing used for?",
+      "options": [
+        "Tracking user locations",
+        "Following a request across multiple services to diagnose latency",
+        "Monitoring disk usage",
+        "Scaling containers"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Observability"
+    },
+    {
+      "id": "sre_08",
+      "text": "What is chaos engineering?",
+      "options": [
+        "Writing messy code",
+        "Intentionally injecting failures to test system resilience",
+        "A deployment strategy",
+        "A monitoring approach"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Reliability"
+    },
+    {
+      "id": "sre_09",
+      "text": "Which command shows real-time resource usage of Kubernetes pods?",
+      "options": [
+        "kubectl get pods",
+        "kubectl top pods",
+        "kubectl describe pods",
+        "kubectl logs"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Kubernetes"
+    },
+    {
+      "id": "sre_10",
+      "text": "What is a runbook?",
+      "options": [
+        "A type of test",
+        "A documented set of procedures for handling operational tasks or incidents",
+        "A CI/CD pipeline",
+        "A load balancer config"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Incident Management"
+    }
+  ],
+  "Blockchain Developer": [
+    {
+      "id": "bc_01",
+      "text": "What is a smart contract?",
+      "options": [
+        "A legal document",
+        "Self-executing code stored on a blockchain",
+        "A type of wallet",
+        "A consensus algorithm"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Smart Contracts"
+    },
+    {
+      "id": "bc_02",
+      "text": "Which language is primarily used to write Ethereum smart contracts?",
+      "options": [
+        "Python",
+        "JavaScript",
+        "Solidity",
+        "Rust"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Smart Contracts"
+    },
+    {
+      "id": "bc_03",
+      "text": "What is gas in Ethereum?",
+      "options": [
+        "A cryptocurrency",
+        "A fee paid for computational work on the network",
+        "A type of token",
+        "A consensus mechanism"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Ethereum"
+    },
+    {
+      "id": "bc_04",
+      "text": "What does DeFi stand for?",
+      "options": [
+        "Decentralised Finance",
+        "Digital File",
+        "Distributed Framework",
+        "Defined Function Interface"
+      ],
+      "correct_index": 0,
+      "sub_topic": "Web3"
+    },
+    {
+      "id": "bc_05",
+      "text": "What is the purpose of the ERC-20 standard?",
+      "options": [
+        "Define NFT behaviour",
+        "Define a standard interface for fungible tokens on Ethereum",
+        "Govern consensus",
+        "Manage gas fees"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Ethereum"
+    },
+    {
+      "id": "bc_06",
+      "text": "What is a blockchain consensus mechanism?",
+      "options": [
+        "A smart contract pattern",
+        "A method by which nodes agree on the state of the ledger",
+        "A wallet type",
+        "A token standard"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Blockchain Concepts"
+    },
+    {
+      "id": "bc_07",
+      "text": "What tool is used to develop and test Ethereum smart contracts locally?",
+      "options": [
+        "Postman",
+        "Hardhat",
+        "Docker",
+        "Jenkins"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Smart Contracts"
+    },
+    {
+      "id": "bc_08",
+      "text": "What is an NFT?",
+      "options": [
+        "A fungible token",
+        "A Non-Fungible Token representing unique ownership",
+        "A consensus algorithm",
+        "A DeFi protocol"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Web3"
+    },
+    {
+      "id": "bc_09",
+      "text": "What is the role of a private key in a blockchain wallet?",
+      "options": [
+        "Encrypt transactions publicly",
+        "Prove ownership and sign transactions",
+        "Store token balances",
+        "Connect to the network"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Blockchain Concepts"
+    },
+    {
+      "id": "bc_10",
+      "text": "What is a DAO?",
+      "options": [
+        "A type of smart contract bug",
+        "A Decentralised Autonomous Organisation governed by token holders",
+        "A consensus algorithm",
+        "A layer-2 solution"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Web3"
+    }
+  ],
+  "Embedded Systems Engineer": [
+    {
+      "id": "emb_01",
+      "text": "What is an RTOS?",
+      "options": [
+        "A programming language",
+        "Real-Time Operating System designed for deterministic task scheduling",
+        "A microcontroller brand",
+        "A debugging tool"
+      ],
+      "correct_index": 1,
+      "sub_topic": "RTOS"
+    },
+    {
+      "id": "emb_02",
+      "text": "What does GPIO stand for?",
+      "options": [
+        "General Purpose Input/Output",
+        "Global Process I/O",
+        "Graphics Processing Interface Output",
+        "General Protocol I/O"
+      ],
+      "correct_index": 0,
+      "sub_topic": "Hardware"
+    },
+    {
+      "id": "emb_03",
+      "text": "Which communication protocol is synchronous and uses a master-slave architecture?",
+      "options": [
+        "UART",
+        "I2C",
+        "SPI",
+        "CAN"
+      ],
+      "correct_index": 2,
+      "sub_topic": "Protocols"
+    },
+    {
+      "id": "emb_04",
+      "text": "What is the purpose of a watchdog timer?",
+      "options": [
+        "Measure execution time",
+        "Reset the system if software hangs",
+        "Control PWM signals",
+        "Manage power consumption"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Hardware"
+    },
+    {
+      "id": "emb_05",
+      "text": "What does volatile keyword mean in C for embedded systems?",
+      "options": [
+        "The variable is constant",
+        "The variable can change unexpectedly (e.g. by hardware) and must not be optimised away",
+        "The variable is stored in flash",
+        "The variable is thread-safe"
+      ],
+      "correct_index": 1,
+      "sub_topic": "C Programming"
+    },
+    {
+      "id": "emb_06",
+      "text": "What is PWM used for in embedded systems?",
+      "options": [
+        "Serial communication",
+        "Controlling analog-like output (e.g. motor speed, LED brightness) using digital signals",
+        "Memory management",
+        "Interrupt handling"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Hardware"
+    },
+    {
+      "id": "emb_07",
+      "text": "What is the difference between flash and RAM in a microcontroller?",
+      "options": [
+        "They are the same",
+        "Flash is non-volatile program storage; RAM is volatile working memory",
+        "RAM is larger than flash always",
+        "Flash is faster than RAM"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Hardware"
+    },
+    {
+      "id": "emb_08",
+      "text": "What is an interrupt in embedded systems?",
+      "options": [
+        "A software bug",
+        "A signal that pauses the CPU to handle a high-priority event",
+        "A type of memory",
+        "A communication protocol"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Hardware"
+    },
+    {
+      "id": "emb_09",
+      "text": "Which I2C address is reserved for general call?",
+      "options": [
+        "0x00",
+        "0xFF",
+        "0x7F",
+        "0x01"
+      ],
+      "correct_index": 0,
+      "sub_topic": "Protocols"
+    },
+    {
+      "id": "emb_10",
+      "text": "What is cross-compilation?",
+      "options": [
+        "Compiling on the target device",
+        "Compiling code on one platform to run on a different target platform",
+        "A debugging technique",
+        "A type of linker error"
+      ],
+      "correct_index": 1,
+      "sub_topic": "C Programming"
+    }
+  ],
+  "Product Manager": [
+    {
+      "id": "pm_01",
+      "text": "What is a product roadmap?",
+      "options": [
+        "A technical architecture diagram",
+        "A high-level visual plan showing product direction and priorities over time",
+        "A sprint backlog",
+        "A user story map"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Product Strategy"
+    },
+    {
+      "id": "pm_02",
+      "text": "What does MoSCoW stand for in prioritisation?",
+      "options": [
+        "Must, Should, Could, Would",
+        "Must have, Should have, Could have, Won't have",
+        "Main, Secondary, Core, Wishlist",
+        "None of the above"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Prioritisation"
+    },
+    {
+      "id": "pm_03",
+      "text": "What is a North Star Metric?",
+      "options": [
+        "A KPI for engineering",
+        "The single metric that best captures the core value delivered to customers",
+        "A financial target",
+        "A user acquisition metric"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Metrics"
+    },
+    {
+      "id": "pm_04",
+      "text": "What is the purpose of a user story?",
+      "options": [
+        "Document technical requirements",
+        "Describe a feature from the end user's perspective",
+        "Define system architecture",
+        "Track bugs"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Agile"
+    },
+    {
+      "id": "pm_05",
+      "text": "What is A/B testing used for in product management?",
+      "options": [
+        "Testing code quality",
+        "Comparing two versions of a feature to determine which performs better",
+        "Stress testing servers",
+        "Validating database schemas"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Experimentation"
+    },
+    {
+      "id": "pm_06",
+      "text": "What does OKR stand for?",
+      "options": [
+        "Objectives and Key Results",
+        "Output and Key Requirements",
+        "Operational Key Roadmap",
+        "Objectives and Key Risks"
+      ],
+      "correct_index": 0,
+      "sub_topic": "Product Strategy"
+    },
+    {
+      "id": "pm_07",
+      "text": "What is the Jobs-to-be-Done framework?",
+      "options": [
+        "A hiring framework",
+        "A way to understand what customers are trying to accomplish with a product",
+        "A sprint planning method",
+        "A technical design pattern"
+      ],
+      "correct_index": 1,
+      "sub_topic": "User Research"
+    },
+    {
+      "id": "pm_08",
+      "text": "What is a sprint retrospective?",
+      "options": [
+        "A product demo",
+        "A meeting to reflect on what went well and what to improve in the last sprint",
+        "A backlog grooming session",
+        "A stakeholder review"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Agile"
+    },
+    {
+      "id": "pm_09",
+      "text": "What is the difference between output and outcome in product thinking?",
+      "options": [
+        "They are the same",
+        "Output is what you build; outcome is the change in user behaviour or business result",
+        "Outcome is a feature; output is a metric",
+        "Output is a KPI; outcome is a roadmap"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Product Strategy"
+    },
+    {
+      "id": "pm_10",
+      "text": "What is a PRD?",
+      "options": [
+        "Product Release Date",
+        "Product Requirements Document \u2014 describes what a product should do",
+        "Project Risk Dashboard",
+        "Performance Review Document"
+      ],
+      "correct_index": 1,
+      "sub_topic": "Documentation"
+    }
   ]
 }

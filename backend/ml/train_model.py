@@ -17,13 +17,14 @@ from __future__ import annotations
 
 import os
 import sys
+import logging
 
 import joblib
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 
 # Support running as a script from backend/
@@ -41,6 +42,9 @@ VECTORIZER_PATH = os.path.join(ARTIFACTS_DIR, "vectorizer.joblib")
 LEGACY_MODEL_DIR        = os.path.join(BASE_DIR, "models")
 DOMAIN_MODEL_PATH       = os.path.join(LEGACY_MODEL_DIR, "ml_domain_recommender.joblib")
 DIFFICULTY_MODEL_PATH   = os.path.join(LEGACY_MODEL_DIR, "ml_difficulty_model.joblib")
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s  %(levelname)s  %(message)s")
+log = logging.getLogger(__name__)
 
 
 def _ensure_training_data() -> None:
@@ -90,67 +94,13 @@ def load_training_data() -> pd.DataFrame:
 
 
 def train(random_state: int = 42) -> dict:
-    """
-    Full training pipeline:
-      1. Load CSV
-      2. TF-IDF vectorize the 'skills' column
-      3. Train RandomForestClassifier
-      4. Evaluate and persist artifacts
-    Returns the artifact dict.
-    """
-    os.makedirs(ARTIFACTS_DIR, exist_ok=True)
+    """Delegates to ml/trainer.py which is the canonical training pipeline."""
+    from ml.trainer import train as canonical_train
+    artifact = canonical_train(random_state=random_state)
+    # Also save to legacy paths so inference.py keeps working
     os.makedirs(LEGACY_MODEL_DIR, exist_ok=True)
-
-    df = load_training_data()
-    print(f"Loaded {len(df)} training rows across {df['job_role'].nunique()} domains.")
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        df["skills"],
-        df["job_role"],
-        test_size=0.2,
-        random_state=random_state,
-        stratify=df["job_role"],
-    )
-
-    vectorizer = TfidfVectorizer(
-        ngram_range=(1, 2),
-        min_df=1,
-        max_features=5000,
-        sublinear_tf=True,
-    )
-    X_train_vec = vectorizer.fit_transform(X_train)
-    X_test_vec  = vectorizer.transform(X_test)
-
-    model = RandomForestClassifier(
-        n_estimators=200,
-        max_depth=None,
-        min_samples_split=2,
-        random_state=random_state,
-        n_jobs=-1,
-    )
-    model.fit(X_train_vec, y_train)
-
-    y_pred = model.predict(X_test_vec)
-    print("=== ML Pipeline Evaluation ===")
-    print(classification_report(y_test, y_pred))
-
-    artifact = {
-        "vectorizer": vectorizer,
-        "model":      model,
-        "labels":     list(model.classes_),
-        "feature_names": list(vectorizer.get_feature_names_out()),
-    }
-
-    joblib.dump(vectorizer, VECTORIZER_PATH)
-    joblib.dump(model,      MODEL_PATH)
-    print(f"Saved vectorizer → {VECTORIZER_PATH}")
-    print(f"Saved model      → {MODEL_PATH}")
-
-    # Also persist as the legacy domain recommender so existing inference.py keeps working
-    legacy_artifact = {"vectorizer": vectorizer, "model": model, "labels": list(model.classes_)}
-    joblib.dump(legacy_artifact, DOMAIN_MODEL_PATH)
-    print(f"Saved legacy domain model → {DOMAIN_MODEL_PATH}")
-
+    legacy = {"vectorizer": artifact["vectorizer"], "model": artifact["model"], "labels": artifact["labels"]}
+    joblib.dump(legacy, DOMAIN_MODEL_PATH)
     return artifact
 
 
@@ -180,9 +130,39 @@ def train_difficulty_model() -> dict:
     frame = _build_difficulty_frame()
     X = frame[["recent_score", "avg_score", "weak_topic_rate", "attempts"]]
     y = frame["next_difficulty"]
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.20, random_state=42, stratify=y
+    )
     clf = RFC(n_estimators=160, random_state=42)
-    clf.fit(X, y)
-    artifact = {"model": clf, "feature_names": list(X.columns)}
+    clf.fit(X_train, y_train)
+
+    report = ""
+    matrix_list: list[list[int]] = []
+    feature_importances = {}
+    try:
+        y_pred = clf.predict(X_test)
+        report = classification_report(y_test, y_pred)
+        matrix = confusion_matrix(y_test, y_pred, labels=list(clf.classes_))
+        matrix_list = matrix.tolist()
+        feature_importances = {
+            feature_name: round(float(importance), 6)
+            for feature_name, importance in zip(X.columns, clf.feature_importances_)
+        }
+
+        log.info("=== Difficulty Model Hold-out Classification Report ===")
+        log.info("\n%s", report)
+        log.info("=== Difficulty Model Confusion Matrix ===")
+        log.info("%s", matrix_list)
+    except Exception as exc:
+        log.warning("Difficulty model evaluation metrics failed: %s", exc)
+
+    artifact = {
+        "model": clf,
+        "feature_names": list(X.columns),
+        "eval_report": report,
+        "confusion_matrix": matrix_list,
+        "feature_importances": feature_importances,
+    }
     os.makedirs(LEGACY_MODEL_DIR, exist_ok=True)
     joblib.dump(artifact, DIFFICULTY_MODEL_PATH)
     return artifact

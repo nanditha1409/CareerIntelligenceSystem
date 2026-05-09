@@ -22,7 +22,7 @@ SKILLS = [
 DOMAIN_PROFILES = {
     "Data Scientist":        {"core": ["python", "ml", "sql", "tensorflow", "pytorch", "spark"],
                               "secondary": ["git", "tableau", "excel"]},
-    "AI-ML Engineer":        {"core": ["python", "ml", "tensorflow", "pytorch", "fastapi"],
+    "AI/ML Engineer":        {"core": ["python", "ml", "tensorflow", "pytorch", "fastapi"],
                               "secondary": ["docker", "git", "aws", "kubernetes"]},
     "Data Analyst":          {"core": ["sql", "excel", "powerbi", "tableau", "python"],
                               "secondary": ["git", "spark"]},

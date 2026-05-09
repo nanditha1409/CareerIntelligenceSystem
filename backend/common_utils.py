@@ -52,6 +52,11 @@ DOMAIN_DATA = {
     for domain, manifest in DOMAIN_MANIFEST.items()
 }
 
+SCORE_WEIGHT_ML = 0.40
+SCORE_WEIGHT_CLF = 0.20
+SCORE_WEIGHT_SEM = 0.25
+SCORE_WEIGHT_COMPAT = 0.15
+
 # ── Learning resources mapped to skills ──────────────────────────────────────
 SKILL_RESOURCES = {
     "python":      [{"title": "Python for Everybody – Coursera",        "url": "https://www.coursera.org/specializations/python",                    "type": "course"},
@@ -265,7 +270,41 @@ def resolve_domain_name(domain: str) -> str:
     normalized = str(domain).strip()
     if not normalized:
         return normalized
-    return LEGACY_DOMAIN_ALIASES.get(normalized, normalized)
+
+    # Direct match in LEGACY_DOMAIN_ALIASES first
+    if normalized in LEGACY_DOMAIN_ALIASES:
+        return LEGACY_DOMAIN_ALIASES[normalized]
+
+    # Extended alias table — covers all shorthand the frontend may send
+    _EXTRA_ALIASES: dict[str, str] = {
+        "ml":               "AI/ML Engineer",
+        "machine learning": "AI/ML Engineer",
+        "ai":               "AI/ML Engineer",
+        "ai/ml":            "AI/ML Engineer",
+        "frontend":         "Full Stack Developer",
+        "front end":        "Full Stack Developer",
+        "backend":          "Backend Developer",
+        "back end":         "Backend Developer",
+        "fullstack":        "Full Stack Developer",
+        "full stack":       "Full Stack Developer",
+        "data science":     "Data Scientist",
+        "ds":               "Data Scientist",
+        "devops":           "DevOps Engineer",
+        "security":         "Cybersecurity Analyst",
+        "cyber":            "Cybersecurity Analyst",
+        "cybersecurity":    "Cybersecurity Analyst",
+        "cyber security":   "Cybersecurity Analyst",
+        "ui":               "UI/UX Designer",
+        "ux":               "UI/UX Designer",
+        "ui/ux":            "UI/UX Designer",
+        "design":           "UI/UX Designer",
+    }
+
+    lower = normalized.lower()
+    if lower in _EXTRA_ALIASES:
+        return _EXTRA_ALIASES[lower]
+
+    return normalized
 
 
 def _keyword_domains_for_skills(user_skills: list[str]) -> dict[str, int]:
@@ -294,6 +333,50 @@ def calculate_compatibility_score(user_skills: list[str], domain: str) -> float:
         return 0.0
     matched_count = sum(1 for skill in required_skills if skill.lower().strip() in normalized_user_skills)
     return round((matched_count / len(required_skills)) * 100, 1)
+
+
+def compute_unified_score(scores: dict) -> float:
+    """
+    Compute a weighted composite domain score from all available signals.
+
+    Args:
+        scores: dict with any subset of keys:
+            "ml"     -> float 0-100
+            "clf"    -> float 0-100
+            "sem"    -> float 0-100
+            "compat" -> float 0-100
+
+    Returns:
+        float 0-100, normalized by the sum of weights for present signals only.
+    """
+    weights = {
+        "ml": SCORE_WEIGHT_ML,
+        "clf": SCORE_WEIGHT_CLF,
+        "sem": SCORE_WEIGHT_SEM,
+        "compat": SCORE_WEIGHT_COMPAT,
+    }
+
+    weighted_total = 0.0
+    total_weight = 0.0
+
+    for key, weight in weights.items():
+        raw_value = scores.get(key)
+        if raw_value is None:
+            continue
+        try:
+            value = float(raw_value)
+        except (TypeError, ValueError):
+            continue
+        if value < 0:
+            value = 0.0
+        elif value > 100:
+            value = 100.0
+        weighted_total += weight * value
+        total_weight += weight
+
+    if total_weight <= 0:
+        return 0.0
+    return round(weighted_total / total_weight, 1)
 
 
 def rank_domains_by_compatibility(user_skills: list[str], limit: int = 3) -> list[dict]:

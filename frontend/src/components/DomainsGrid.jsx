@@ -1,88 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-
-const DOMAINS = [
-  {
-    name: 'Data Scientist',
-    emoji: '🔬',
-    color: 'indigo',
-    salary: '₹6–15 LPA',
-    demand: 'High',
-    desc: 'Extract insights from complex datasets using statistical modelling, machine learning, and visualisation to drive data-informed decisions.',
-    skills: ['Machine Learning', 'Statistics', 'Python / Pandas'],
-  },
-  {
-    name: 'AI-ML Engineer',
-    emoji: '🤖',
-    color: 'violet',
-    salary: '₹10–18 LPA',
-    demand: 'Very High',
-    desc: 'Design, train, and deploy production-grade deep learning models — from transformer architectures to scalable inference pipelines.',
-    skills: ['Deep Learning', 'MLOps / Docker', 'PyTorch / TensorFlow'],
-  },
-  {
-    name: 'Data Analyst',
-    emoji: '📊',
-    color: 'blue',
-    salary: '₹4–10 LPA',
-    demand: 'High',
-    desc: 'Transform raw data into actionable business intelligence through SQL queries, BI dashboards, and statistical analysis.',
-    skills: ['SQL & Window Functions', 'Power BI / Tableau', 'Excel & DAX'],
-  },
-  {
-    name: 'Full Stack Developer',
-    emoji: '🌐',
-    color: 'cyan',
-    salary: '₹5–14 LPA',
-    demand: 'Very High',
-    desc: 'Build end-to-end web applications — from React frontends and REST/GraphQL APIs to database design and cloud deployment.',
-    skills: ['React & TypeScript', 'Node.js / Express', 'Databases & APIs'],
-  },
-  {
-    name: 'Software Engineer',
-    emoji: '⚙️',
-    color: 'amber',
-    salary: '₹5–12 LPA',
-    demand: 'High',
-    desc: 'Architect robust, scalable software systems using strong fundamentals in data structures, algorithms, and design patterns.',
-    skills: ['Data Structures & Algorithms', 'System Design', 'OOP & Testing'],
-  },
-  {
-    name: 'DevOps Engineer',
-    emoji: '🚀',
-    color: 'orange',
-    salary: '₹6–15 LPA',
-    demand: 'High',
-    desc: 'Automate infrastructure, build CI/CD pipelines, and manage containerised workloads to keep systems reliable and deployable.',
-    skills: ['Docker & Kubernetes', 'CI/CD Pipelines', 'Terraform / IaC'],
-  },
-  {
-    name: 'Cybersecurity Analyst',
-    emoji: '🔐',
-    color: 'rose',
-    salary: '₹7–12 LPA',
-    demand: 'High',
-    desc: 'Protect systems and data by identifying vulnerabilities, responding to incidents, and implementing security frameworks.',
-    skills: ['Network Security', 'Cryptography', 'Incident Response'],
-  },
-  {
-    name: 'UI/UX Designer',
-    emoji: '🎨',
-    color: 'pink',
-    salary: '₹4–10 LPA',
-    demand: 'Medium',
-    desc: 'Craft intuitive, accessible digital experiences through user research, interaction design, and high-fidelity prototyping in Figma.',
-    skills: ['Wireframing & Prototyping', 'Visual Design', 'UX Research'],
-  },
-  {
-    name: 'Backend Developer',
-    emoji: '🗄️',
-    color: 'teal',
-    salary: '₹5–13 LPA',
-    demand: 'High',
-    desc: 'Build the server-side logic, APIs, and data layers that power applications — with a focus on performance, security, and scalability.',
-    skills: ['REST API Design', 'Databases & Caching', 'Auth & Security'],
-  },
-];
+import { CAREER_DOMAINS } from '../constants/careerDomains';
 
 const DEMAND_COLOR = {
   'Very High': 'text-emerald-400 bg-emerald-400/10 border-emerald-400/25',
@@ -183,7 +100,7 @@ const DomainsGrid = ({ onTakeTest }) => {
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {DOMAINS.map((d, i) => (
+        {CAREER_DOMAINS.map((d, i) => (
           <DomainCard key={d.name} domain={d} index={i} onTakeTest={onTakeTest} />
         ))}
       </div>

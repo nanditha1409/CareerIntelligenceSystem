@@ -2,9 +2,17 @@ from pydantic import BaseModel, field_validator
 from typing import Any, Dict, List, Optional
 
 
+class ProjectInput(BaseModel):
+    title: str = ""
+    summary: str = ""
+
+
 class SkillsInput(BaseModel):
     # Accepts either legacy List[str] or new Dict[str, int] (skill → proficiency 1-5)
     skills: Any
+    preferred_domain: Optional[str] = None
+    experience_level: Optional[str] = None
+    projects: List[ProjectInput] = []
     user_id: Optional[str] = None
 
     @field_validator("skills")
@@ -23,6 +31,17 @@ class SkillsInput(BaseModel):
             return [s.strip().lower() for s in v if s.strip()]
         raise ValueError("skills must be a list or dict")
 
+    @field_validator("experience_level")
+    @classmethod
+    def validate_experience_level(cls, v):
+        if v is None:
+            return v
+        allowed = {"no_experience", "intern", "intermediate", "advance"}
+        cleaned = v.strip().lower()
+        if cleaned not in allowed:
+            raise ValueError("experience_level must be one of no_experience, intern, intermediate, advance")
+        return cleaned
+
     def skills_as_list(self) -> List[str]:
         if isinstance(self.skills, dict):
             return list(self.skills.keys())
@@ -33,13 +52,41 @@ class SkillsInput(BaseModel):
             return self.skills
         return {s: 3 for s in self.skills}  # default proficiency 3 for legacy list
 
+    def project_text(self) -> str:
+        parts: List[str] = []
+        for project in self.projects:
+            parts.extend([project.title, project.summary])
+        return " ".join(part for part in parts if part).strip()
+
 
 class TestSubmission(BaseModel):
     domain: str
-    answers: List[Any]
+    answers: Any
+    assessment_level: Optional[str] = "easy"
+    programming_language: Optional[str] = None
     # Accepts legacy List[str] or new Dict[str, int]
     skills: Optional[Any] = None
     user_id: Optional[str] = None
+
+    @field_validator("assessment_level")
+    @classmethod
+    def validate_assessment_level(cls, v):
+        if v is None:
+            return "easy"
+        cleaned = v.strip().lower()
+        if cleaned not in {"easy", "medium"}:
+            raise ValueError("assessment_level must be easy or medium")
+        return cleaned
+
+    @field_validator("programming_language")
+    @classmethod
+    def validate_programming_language(cls, v):
+        if v is None:
+            return v
+        cleaned = v.strip().lower()
+        if cleaned not in {"python", "java"}:
+            raise ValueError("programming_language must be python or java")
+        return cleaned
 
     def skills_as_dict(self) -> Dict[str, int]:
         if isinstance(self.skills, dict):
@@ -63,6 +110,8 @@ class ChatRequest(BaseModel):
 class RecommendationItem(BaseModel):
     domain: str
     confidence: float
+    compatibility_score: Optional[float] = None
+    unified_score: Optional[float] = None
     salary: str
     demand: str
     reason: List[str]
@@ -101,6 +150,16 @@ class WeakSubTopic(BaseModel):
     total: int
 
 
+class ChallengeResult(BaseModel):
+    question_id: str
+    sub_topic: str
+    language: str
+    passed: bool
+    passed_tests: int
+    total_tests: int
+    error_message: Optional[str] = None
+
+
 class RecommendResponse(BaseModel):
     recommendations: List[RecommendationItem]
     skill_gap: List[SkillGapItem]
@@ -111,11 +170,15 @@ class EvaluateResponse(BaseModel):
     quiz_score: int
     correct_count: int
     score: int
+    total_questions: Optional[int] = None
+    assessment_level: Optional[str] = "easy"
     feedback: str
     weak_sub_topics: List[WeakSubTopic]
     weak_areas: List[str]
     readiness: ReadinessScore
     resources: List[ResourceItem]
+    programming_language: Optional[str] = None
+    execution_results: Optional[List[ChallengeResult]] = None
 
 
 class UserRegister(BaseModel):
